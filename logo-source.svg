@@ -1,32 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#34d399"/><stop offset="0.55" stop-color="#10b981"/><stop offset="1" stop-color="#047857"/>
-    </linearGradient>
-    <linearGradient id="wal" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e7fbf2"/>
-    </linearGradient>
-    <linearGradient id="coin" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/>
-    </linearGradient>
-    <filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#064e3b" flood-opacity="0.35"/></filter>
-  </defs>
-  <rect width="512" height="512" fill="url(#bg)"/>
-  <circle cx="420" cy="80" r="140" fill="#ffffff" opacity="0.08"/>
-  <!-- billet qui dépasse -->
-  <g transform="rotate(-10 250 170)">
-    <rect x="150" y="128" width="210" height="110" rx="14" fill="#a7f3d0" stroke="#065f46" stroke-width="6"/>
-    <circle cx="255" cy="183" r="24" fill="none" stroke="#065f46" stroke-width="6"/>
-  </g>
-  <!-- pièce -->
-  <circle cx="352" cy="150" r="44" fill="url(#coin)" stroke="#b45309" stroke-width="6"/>
-  <text x="352" y="168" text-anchor="middle" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-weight="900" font-size="54" fill="#92400e">€</text>
-  <!-- portefeuille -->
-  <g filter="url(#sh)">
-    <rect x="110" y="190" width="292" height="200" rx="34" fill="url(#wal)"/>
-  </g>
-  <rect x="110" y="190" width="292" height="34" rx="17" fill="#d1fae5"/>
-  <!-- rabat -->
-  <path d="M300 258 h102 v76 h-102 a38 38 0 0 1 0 -76 z" fill="#065f46"/>
-  <circle cx="314" cy="296" r="14" fill="#fbbf24"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>
+<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset=".55" stop-color="#10b981"/><stop offset="1" stop-color="#047857"/></linearGradient>
+<linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#065f46"/><stop offset="1" stop-color="#022c22"/></linearGradient>
+<linearGradient id="g3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bef264"/><stop offset="1" stop-color="#22c55e"/></linearGradient>
+<linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#0f766e"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+<filter id="sh" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#022c22" flood-opacity=".35"/></filter>
+</defs><rect width="512" height="512" fill="url(#g2)"/>
+<g transform="rotate(-10 250 170)"><rect x="150" y="128" width="210" height="110" rx="14" fill="#34d399" stroke="#022c22" stroke-width="6"/><circle cx="255" cy="183" r="24" fill="none" stroke="#022c22" stroke-width="6"/></g>
+<circle cx="352" cy="150" r="44" fill="url(#gold)" stroke="#b45309" stroke-width="6"/>
+<text x="352" y="168" text-anchor="middle" font-family="Arial" font-weight="900" font-size="54" fill="#92400e">€</text>
+<g filter="url(#sh)"><rect x="110" y="190" width="292" height="200" rx="34" fill="#fff"/></g>
+<path d="M300 258 h102 v76 h-102 a38 38 0 0 1 0 -76z" fill="url(#gold)"/><circle cx="314" cy="296" r="14" fill="#022c22"/></svg>
