@@ -128,6 +128,30 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 .recap div{background:var(--bg);border-radius:12px;padding:8px 10px}
 .recap span{display:block;font-size:11px;color:var(--ink3)}
 .recap b{font-weight:400;font-size:16px}
+.calsum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:16px;margin:10px 0 14px;overflow:hidden}
+.calsum div{text-align:center;padding:12px 4px 10px}
+.calsum span{display:block;font-size:12px;color:var(--ink3)}
+.calsum b{font-size:19px;font-weight:300;letter-spacing:-.02em}
+.calsum .on{box-shadow:inset 0 -2px 0 var(--acc)}
+.calsum .on b{color:var(--acc)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal i{font-style:normal;text-align:center;font-size:10px;letter-spacing:.04em;color:var(--ink3);padding:0 0 4px}
+.cal button,.cal .hors{appearance:none;border:0;background:var(--bg);border-radius:12px;aspect-ratio:1/1.05;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;color:var(--ink)}
+.cal b{font-weight:400;font-size:14px}
+.cal .hors{color:var(--ink3);opacity:.45;cursor:default}
+.cal .pst{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;height:20px}
+.cal u{text-decoration:none;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 0 1.5px var(--bg),0 1px 3px rgba(0,0,0,.18);font-size:12px;display:grid;place-items:center;margin-left:-5px}
+.cal u:first-child{margin-left:0}
+.cal u.plus{font-size:9px;font-weight:600;color:#444}
+.cal button:has(.pst u) b{transform:translateY(-6px)}
+.cal button.passe{opacity:.55}
+.cal button.auj{box-shadow:inset 0 0 0 1.5px var(--ink3);opacity:1}
+.cal button.auj b{color:var(--acc);font-weight:600}
+.cal button.sel{box-shadow:inset 0 0 0 2px var(--acc);opacity:1}
+.nv{display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--line);align-items:flex-start}
+.nv:first-of-type{border-top:0}
+.nv b{display:block;font-weight:600;font-size:15px}
+.nv span{display:block;font-size:13.5px;color:var(--ink2);line-height:1.4;margin-top:2px}
 .tuto p{margin:0 0 12px;font-size:15px;line-height:1.45}
 .tip.rappel{background:linear-gradient(150deg,#b91c1c,#f97316)!important;border:3px solid #fde047!important;animation:alerte 1.6s ease-in-out infinite}
 @keyframes alerte{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.75)}50%{box-shadow:0 0 0 12px rgba(249,115,22,0)}}
@@ -294,6 +318,7 @@ let DB, S = {tab: 'accueil', mois: ym(today()), q: '', fCat: '', boot: true};
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(KEY)); } catch (e) { DB = null; }
+  S.ancien = !!DB;
   if (!DB) DB = {tx: [], cats: DEF.dep.map(([id, nom, emo]) => ({id, nom, emo, type: 'dep', budget: 0})).concat(DEF.rev.map(([id, nom, emo]) => ({id, nom, emo, type: 'rev', budget: 0}))), goals: []};
   DB.fixes = DB.fixes || [];
   DB.comptes = DB.comptes || [];
@@ -443,8 +468,61 @@ function carteAVenir() {
   l.sort((a, b) => a.date.localeCompare(b.date));
   const T = l.filter((x) => x.f.type === 'dep').reduce((s, x) => s + x.f.montant, 0);
   const jl = (d) => new Date(d + 'T12:00').toLocaleDateString('fr-FR', {weekday: 'short', day: 'numeric', month: 'short'});
-  return `<div class="card"><div class="row"><h2 class="h2">🗓️ D'ici ta paie</h2><b class="down">${T ? '−' + fE0.format(T) : ''}</b></div><p class="sub" style="margin:0 0 4px">Prélèvements et virements prévus jusqu'au ${jl(paie)}.</p>
+  return `<div class="card"><div class="row"><h2 class="h2">🗓️ D'ici ta paie</h2><b class="down">${T ? '−' + fE0.format(T) : ''}</b></div><p class="sub" style="margin:0 0 4px">Prélèvements et virements prévus jusqu'au ${jl(paie)}. <a href="#" data-gocal style="color:var(--acc);text-decoration:none">Calendrier ›</a></p>
     ${l.map(({f, date}) => `<div class="it" data-fixe="${f.id}"><div class="emo">${cat(f.cat).emo}</div><div class="t"><b>${esc(f.note || cat(f.cat).nom)}</b><span style="text-transform:capitalize">${jl(date)}</span></div><span class="${f.type === 'dep' ? 'm-dep' : 'm-rev'}">${f.type === 'dep' ? '−' : '+'}${fE.format(f.montant)}</span></div>`).join('')}</div>`;
+}
+/* ---------- Nouveautés : à chaque mise à jour, ajouter une entrée et augmenter VERSION ---------- */
+const VERSION = 2;
+const NOUV = {
+  2: [
+    ['🗓️', 'Calendrier des fixes', 'Dans Budgets, vois en un coup d\'œil quel jour tombent ton loyer, tes abonnements et ta paie. Touche un jour pour le détail.'],
+    ['🩺', 'Remboursements santé', 'Coche « À me faire rembourser » sur une dépense, indique le montant attendu, puis relie chaque remboursement reçu à sa dépense : tu vois ton vrai reste à charge.'],
+    ['⚡', 'Ajout rapide', 'Tes dépenses habituelles apparaissent en raccourcis sur l\'accueil.'],
+    ['📋', 'Bilan du mois', 'Début de mois : le résumé du mois passé. Dans Analyses : ce qui a le plus bougé.'],
+    ['🚨', 'Limites de dépenses', 'Fixe tes limites par catégorie dans Budgets et choisis à partir de quel % être alertée.'],
+    ['💾', 'Sauvegarde du lundi', 'Un rappel chaque semaine pour exporter tes données en sécurité.'],
+    ['🏷️', 'Tes catégories', 'Crée une catégorie avec l\'emoji de ton choix directement en ajoutant une dépense ou un revenu (bouton « Créer »).']
+  ]
+};
+function checkNouveautes() {
+  let vu = 0; try { vu = Number(localStorage.getItem('mf_vu')) || 0; localStorage.setItem('mf_vu', VERSION); } catch (e) { return; }
+  if (!S.ancien || vu >= VERSION) return;
+  const l = Object.keys(NOUV).map(Number).filter((v) => v > vu && v <= VERSION).sort((a, b) => b - a).flatMap((v) => NOUV[v]);
+  if (!l.length) return;
+  sheet(`<div class="pop-ico">✨</div><p class="pop-t">Nouveautés</p><p class="sub" style="text-align:center;margin:0 0 10px">Ton appli vient d'être mise à jour.</p>
+    ${l.map(([e, t, d]) => `<div class="nv"><div class="emo">${e}</div><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
+    <button class="btn" data-close>C'est parti !</button>`);
+}
+/* ---------- Calendrier des fixes ---------- */
+function fixesDuMois(m) {
+  const [y, mo] = m.split('-').map(Number), dm = new Date(y, mo, 0).getDate(), l = [];
+  DB.fixes.filter((f) => f.actif && m >= f.debut && (!f.fin || m <= f.fin)).forEach((f) => l.push({f, j: Math.min(f.jour, dm)}));
+  return l.sort((a, b) => a.j - b.j);
+}
+function carteCalendrier() {
+  const m = S.mois, [y, mo] = m.split('-').map(Number), dm = new Date(y, mo, 0).getDate();
+  const dec = (new Date(y, mo - 1, 1).getDay() + 6) % 7, l = fixesDuMois(m);
+  const auj = jourLocal(new Date()), jPaie = Math.min(DB.reglages.paie, dm);
+  if (!S.calJ || S.calJ.slice(0, 7) !== m) S.calJ = auj.slice(0, 7) === m ? auj : (l[0] ? m + '-' + String(l[0].j).padStart(2, '0') : m + '-01');
+  const totD = l.filter((x) => x.f.type === 'dep').reduce((s, x) => s + x.f.montant, 0), totR = l.filter((x) => x.f.type === 'rev').reduce((s, x) => s + x.f.montant, 0);
+  const pdm = new Date(y, mo - 1, 0).getDate();
+  let g = ['LUN.', 'MAR.', 'MER.', 'JEU.', 'VEN.', 'SAM.', 'DIM.'].map((d) => `<i>${d}</i>`).join('');
+  for (let k = dec; k > 0; k--) g += `<span class="hors"><b>${pdm - k + 1}</b></span>`;
+  for (let j = 1; j <= dm; j++) {
+    const ds = m + '-' + String(j).padStart(2, '0'), it = l.filter((x) => x.j === j);
+    const pas = it.slice(0, 2).map((x) => `<u class="${x.f.type === 'rev' ? 'rv' : ''}">${cat(x.f.cat).emo}</u>`).join('') + (it.length > 2 ? `<u class="plus">+${it.length - 2}</u>` : '') + (!it.length && j === jPaie ? '<u class="rv">💶</u>' : '');
+    g += `<button data-calj="${ds}" class="${ds === auj ? 'auj ' : ''}${ds === S.calJ ? 'sel ' : ''}${ds < auj ? 'passe' : ''}"><b>${j}</b><span class="pst">${pas}</span></button>`;
+  }
+  const fin = (7 - ((dec + dm) % 7)) % 7;
+  for (let k = 1; k <= fin; k++) g += `<span class="hors"><b>${k}</b></span>`;
+  const jl = l.filter((x) => m + '-' + String(x.j).padStart(2, '0') === S.calJ);
+  const lab = new Date(S.calJ + 'T12:00').toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'});
+  return `<div class="card" id="cal"><div class="row"><h2 class="h2">🗓️ Calendrier des fixes</h2><span class="sub" style="margin:0">${esc(moisLab(m))}</span></div>
+    <div class="calsum"><div><span>Entrées fixes</span><b>+${fE0.format(totR)}</b></div><div><span>Sorties fixes</span><b>−${fE0.format(totD)}</b></div><div class="on"><span>Récurrents</span><b>${l.length}</b></div></div>
+    <div class="cal">${g}</div>
+    <p class="grp" style="margin:14px 0 2px">${lab.charAt(0).toUpperCase() + lab.slice(1)}${Number(S.calJ.slice(8)) === jPaie ? ' · 💶 jour de paie' : ''}</p>
+    ${jl.length ? jl.map(({f}) => `<div class="it" data-fixe="${f.id}"><div class="emo">${cat(f.cat).emo}</div><div class="t"><b>${esc(f.note || cat(f.cat).nom)}</b><span>${esc(catLab(f.cat))}${S.calJ <= auj ? ' · passé' : ''}</span></div><span class="${f.type === 'dep' ? 'm-dep' : 'm-rev'}">${f.type === 'dep' ? '−' : '+'}${fE.format(f.montant)}</span></div>`).join('') : '<div class="empty">Rien de prévu ce jour-là.</div>'}
+    <button class="small" style="margin-top:10px" data-newfixe>+ Ajouter une charge fixe</button></div>`;
 }
 /* ---------- Alerte budgets ---------- */
 function carteAlerteBud() {
@@ -783,6 +861,7 @@ function renderBudgets() {
       <div class="bud"><div class="row"><span>🚨 M'alerter à partir de</span><span style="display:flex;align-items:center;gap:6px"><input class="f" style="width:70px;text-align:right" inputmode="numeric" data-seuil value="${DB.reglages.seuil || 80}"> %</span></div></div>
       ${deps.map((c) => `<div class="bud"><div class="row"><span>${c.emo} ${esc(c.nom)}</span><input class="f" style="width:120px;text-align:right" inputmode="decimal" data-bud="${c.id}" value="${c.budget || ''}" placeholder="0 €"></div></div>`).join('')}
     </div>
+    ${carteCalendrier()}
     <div class="card"><h2 class="h2">Dépenses et revenus fixes</h2><p class="sub">Loyer, abonnements, salaire… ajoutés automatiquement chaque mois au jour choisi. ${fxTot ? 'Total des dépenses fixes : ' + fE0.format(fxTot) + ' / mois.' : ''}</p>
       ${fx.length ? fx.map((f) => `<div class="it" data-fixe="${f.id}"><div class="emo">${cat(f.cat).emo}</div><div class="t"><b>${esc(f.note || cat(f.cat).nom)}${f.actif ? '' : ' <span class="tag">En pause</span>'}</b><span>${esc(catLab(f.cat))} · le ${f.jour} du mois</span></div><span class="${f.type === 'dep' ? 'm-dep' : 'm-rev'}">${f.type === 'dep' ? '−' : '+'}${fE.format(f.montant)}</span></div>`).join('') : '<div class="empty">Aucune pour l\'instant.</div>'}
       <button class="btn" data-newfixe>+ Nouvelle dépense ou revenu fixe</button>
@@ -1095,6 +1174,8 @@ document.addEventListener('click', (e) => {
   if (e.target.closest('[data-rexp]')) { exporter().then((ok) => { if (ok && rappelDu()) openConfirmSauv(); }); return; }
   if (e.target.closest('[data-rtuto]')) { openTutoSauv(); return; }
   if (e.target.closest('[data-rok]')) { DB.reglages.sauvOk = jourLocal(new Date()); save(); closeSheet(); renderRappel(); toast('Merci ! Prochain rappel lundi 👍'); return; }
+  const cj = e.target.closest('[data-calj]'); if (cj) { S.calJ = cj.dataset.calj; const y0 = window.scrollY; renderBudgets(); window.scrollTo(0, y0); return; }
+  if (e.target.closest('[data-gocal]')) { e.preventDefault(); showTab('budgets'); const c = $('cal'); if (c) c.scrollIntoView({block: 'start'}); window.scrollBy(0, -190); return; }
   const rb = e.target.closest('[data-remb]'); if (rb) { openRemb(rb.dataset.remb); return; }
   const qk = e.target.closest('[data-quick]'); if (qk) { const x = (S.quick || [])[+qk.dataset.quick]; if (x) openTx(null, {cat: x.cat, note: x.note, montant: x.montant}); return; }
   const bl = e.target.closest('[data-bilan]'); if (bl) { S.mois = bl.dataset.bilan; S.vue = 'mois'; renderAll(); showTab('analyses'); window.scrollTo(0, 0); return; }
@@ -1124,7 +1205,7 @@ $('btn-reglages').onclick = openReglages;
 $('m-prev').onclick = () => { S.mois = addMois(S.mois, -1); renderAll(); };
 $('m-next').onclick = () => { S.mois = addMois(S.mois, 1); renderAll(); };
 
-load(); renderAll();
+load(); renderAll(); checkNouveautes();
 startLock(localStorage.getItem(PINK) ? 'check' : 'new');
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
