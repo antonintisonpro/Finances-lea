@@ -80,6 +80,7 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 .cats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .cats button{appearance:none;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 4px;font-size:12px;color:var(--ink2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
 .cats button span{font-size:22px}
+.cats button.add,.chips button.add{border-style:dashed;color:var(--acc)}
 .cats button.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,var(--card));color:var(--ink);font-weight:600}
 .btn{appearance:none;border:0;background:var(--acc);color:#fff;font-weight:600;font-size:16px;border-radius:12px;padding:13px;width:100%;margin-top:14px;cursor:pointer}
 .btn.ghost{background:none;color:var(--ink2);border:1px solid var(--line)}
@@ -120,6 +121,9 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 .tip .big{font-size:30px;font-weight:800;margin:4px 0}
 .tip .btn{background:#fff;color:#2b2d7a}
 .tip .chips button{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
+.tuto p{margin:0 0 12px;font-size:15px;line-height:1.45}
+.tip.rappel{background:linear-gradient(150deg,#065f46,#10b981)!important}
+.tip.rappel .chips button{background:rgba(255,255,255,.18)}
 .tip.warn{background:linear-gradient(150deg,#7a1f3d,#d0436a)}
 .donut{display:flex;align-items:center;gap:16px}
 .donut svg{flex:none}
@@ -163,7 +167,7 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 <header class="top">
   <div class="top-row">
     <h1>Mes Finances</h1>
-    <button class="ibtn" id="btn-reglages" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></button>
+    <button class="ibtn" id="btn-reglages" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
   <div class="month"><button id="m-prev" aria-label="Mois précédent">‹</button><b id="m-lab"></b><button id="m-next" aria-label="Mois suivant">›</button></div>
   <div class="sum">
@@ -174,6 +178,7 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 </header>
 
 <main>
+  <div id="rappel"></div>
   <section id="p-accueil"></section>
   <section id="p-mouv" class="hide"></section>
   <section id="p-analyses" class="hide"></section>
@@ -203,7 +208,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const ym = (d) => d.slice(0, 7);
 const DEF = {
   dep: [['courses', 'Courses', '🛒'], ['logement', 'Logement', '🏠'], ['transport', 'Transport', '⛽'], ['sante', 'Santé', '💊'], ['shopping', 'Shopping', '🛍️'], ['resto', 'Restaurants', '🍽️'], ['loisirs', 'Loisirs', '🎉'], ['abos', 'Abonnements', '📱'], ['beaute', 'Beauté', '💅'], ['cadeaux', 'Cadeaux', '🎁'], ['enfants', 'Enfants', '🧸'], ['autres', 'Autres', '📦']],
-  rev: [['salaire', 'Salaire', '💶'], ['prime', 'Prime', '⭐'], ['aides', 'Aides', '🤝'], ['autres_r', 'Autres', '➕']]
+  rev: [['salaire', 'Salaire', '💶'], ['prime', 'Prime', '⭐'], ['rembours', 'Remboursements santé', '🩺'], ['virements', 'Virements reçus', '🔁'], ['ventes', 'Ventes (Vinted…)', '🏷️'], ['aides', 'Aides', '🤝'], ['autres_r', 'Autres', '➕']]
 };
 let DB, S = {tab: 'accueil', mois: ym(today()), q: '', fCat: ''};
 
@@ -215,6 +220,7 @@ function load() {
   DB.reglages = Object.assign({paie: 25, delai: 60, mode: 'auto', acc: 'violet'}, DB.reglages || {});
   applyTheme();
   DB.cats.forEach((c) => { if (c.parent === undefined) c.parent = null; });
+  if (!DB.v2cats) { DEF.rev.forEach(([id, nom, emo]) => { if (!DB.cats.some((c) => c.id === id)) DB.cats.push({id, nom, emo, type: 'rev', budget: 0, parent: null}); }); DB.v2cats = 1; }
   genFixes();
 }
 function applyTheme() {
@@ -334,6 +340,11 @@ function suggestion() {
   const cur = ym(today());
   if (S.mois !== cur) return '';
   const st = stats(cur), P = DB.reglages.paie, D = st.D;
+  if (!st.l.length) return `<div class="card tip"><h2 class="h2">👋 Bienvenue !</h2><p class="sub">Pour bien démarrer :</p>
+    <div class="kv"><span>1. Ajoute ton salaire et tes dépenses fixes (loyer, abonnements…)</span></div>
+    <div class="kv"><span>2. Note tes dépenses au fil du mois avec le bouton +</span></div>
+    <div class="kv"><span>3. Crée tes propres catégories avec l'emoji de ton choix (bouton « Créer » lors d'un ajout)</span></div>
+    <button class="btn" data-goto="budgets">Ajouter mes fixes ›</button></div>`;
   const jPaie = D < P ? P - D : st.N - D + P;
   const resteAuj = st.r - st.d;
   const estim = resteAuj - st.fixesVenirD + st.fixesVenirR - st.rythme * jPaie;
@@ -592,7 +603,7 @@ function renderEpargne() {
       <button class="btn" data-newgoal>+ Nouvel objectif</button>
     </div>`;
 }
-function renderAll() { renderHead(); renderAccueil(); renderMouv(); renderAnalyses(); renderBudgets(); renderPatrimoine(); showTab(S.tab); }
+function renderAll() { renderRappel(); renderHead(); renderAccueil(); renderMouv(); renderAnalyses(); renderBudgets(); renderPatrimoine(); showTab(S.tab); }
 function showTab(t) { S.tab = t; ['accueil', 'mouv', 'analyses', 'budgets', 'patrimoine'].forEach((x) => $('p-' + x).classList.toggle('hide', x !== t)); document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); }
 
 /* ---------- Feuilles ---------- */
@@ -604,12 +615,14 @@ function num(v) { const n = Number(String(v).replace(/\s|€/g, '').replace(',',
 function openTx(id) {
   const t = id ? DB.tx.find((x) => x.id === id) : {type: 'dep', montant: '', cat: 'courses', date: today(), note: ''};
   let type = t.type, sel = t.cat, rep = false;
-  const subChips = () => { const l = subs(mainOf(sel)); return l.length ? `<div class="chips">${[cat(mainOf(sel))].concat(l).map((c, i) => `<button data-sc="${c.id}" class="${c.id === sel ? 'on' : ''}">${i ? esc(c.nom) : 'Sans sous-catégorie'}</button>`).join('')}</div>` : ''; };
+  const subChips = () => { const l = subs(mainOf(sel)); return `<div class="chips">${l.length ? [cat(mainOf(sel))].concat(l).map((c, i) => `<button data-sc="${c.id}" class="${c.id === sel ? 'on' : ''}">${i ? esc(c.nom) : 'Sans sous-catégorie'}</button>`).join('') : ''}<button data-newsc class="add">+ Sous-catégorie</button></div>`; };
+  const keep = () => { t.montant = $('t-m').value; t.date = $('t-d').value; t.note = $('t-n').value; rep = !!($('t-rep') && $('t-rep').checked); };
+  const back = (nid) => { if (nid) sel = nid; renderAll(); draw(); };
   const draw = () => {
     sheet(`${head(id ? 'Modifier' : 'Ajouter')}
       <div class="seg" data-type><button data-v="dep" class="${type === 'dep' ? 'on' : ''}">Dépense</button><button data-v="rev" class="${type === 'rev' ? 'on' : ''}">Revenu</button></div>
       <label class="l">Montant</label><input class="f big" id="t-m" inputmode="decimal" placeholder="0,00 €" value="${t.montant === '' ? '' : String(t.montant).replace('.', ',')}">
-      <label class="l">Catégorie</label><div class="cats">${mains(type).map((c) => `<button data-c="${c.id}" class="${c.id === mainOf(sel) ? 'on' : ''}"><span>${c.emo}</span>${esc(c.nom)}</button>`).join('')}</div>
+      <label class="l">Catégorie</label><div class="cats">${mains(type).map((c) => `<button data-c="${c.id}" class="${c.id === mainOf(sel) ? 'on' : ''}"><span>${c.emo}</span>${esc(c.nom)}</button>`).join('')}<button data-newc class="add"><span>＋</span>Créer</button></div>
       <div id="t-subs">${subChips()}</div>
       <label class="l">Date</label><input class="f" id="t-d" type="date" value="${t.date}">
       <label class="l">Note (facultatif)</label><input class="f" id="t-n" value="${esc(t.note || '')}" placeholder="Ex. Carrefour, essence…">
@@ -618,8 +631,8 @@ function openTx(id) {
       ${id ? '<button class="btn danger" data-deltx>Supprimer</button>' : ''}`);
     const box = $('sh');
     box.querySelector('[data-type]').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; t.montant = $('t-m').value; t.date = $('t-d').value; t.note = $('t-n').value; rep = !!($('t-rep') && $('t-rep').checked); type = b.dataset.v; sel = mains(type)[0].id; draw(); };
-    box.querySelector('.cats').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; sel = b.dataset.c; box.querySelectorAll('.cats button').forEach((x) => x.classList.toggle('on', x === b)); $('t-subs').innerHTML = subChips(); };
-    $('t-subs').onclick = (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; sel = b.dataset.sc; $('t-subs').innerHTML = subChips(); };
+    box.querySelector('.cats').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; if (b.hasAttribute('data-newc')) { keep(); openCat(null, null, {type, done: back}); return; } sel = b.dataset.c; box.querySelectorAll('.cats button').forEach((x) => x.classList.toggle('on', x === b)); $('t-subs').innerHTML = subChips(); };
+    $('t-subs').onclick = (e) => { if (e.target.closest('[data-newsc]')) { keep(); openCat(null, mainOf(sel), {done: back}); return; } const b = e.target.closest('[data-sc]'); if (!b) return; sel = b.dataset.sc; $('t-subs').innerHTML = subChips(); };
     box.querySelector('[data-savetx]').onclick = () => {
       const m = num($('t-m').value);
       if (!(m > 0)) { toast('Indique un montant'); return; }
@@ -642,13 +655,14 @@ function openTx(id) {
 let delArm = 0;
 function confirmDel() { if (Date.now() - delArm < 3000) { delArm = 0; return true; } delArm = Date.now(); toast('Touche encore pour confirmer'); return false; }
 
-function openCat(id, parent) {
-  const c = id ? DB.cats.find((x) => x.id === id) : {nom: '', emo: parent ? cat(parent).emo : '🏷️', type: parent ? cat(parent).type : 'dep', budget: 0, parent: parent || null};
+function openCat(id, parent, opts) {
+  const c = id ? DB.cats.find((x) => x.id === id) : {nom: '', emo: parent ? cat(parent).emo : (opts && opts.type === 'rev' ? '💰' : '🏷️'), type: parent ? cat(parent).type : (opts && opts.type) || 'dep', budget: 0, parent: parent || null};
   const sl = id && !c.parent ? subs(id) : [];
-  sheet(`${head(id ? (c.parent ? 'Sous-catégorie' : 'Catégorie') : parent ? 'Nouvelle sous-catégorie de ' + esc(cat(parent).nom) : 'Nouvelle catégorie')}
-    <label class="l">Nom</label><input class="f" id="c-n" value="${esc(c.nom)}">
-    <label class="l">Logo</label><button class="emobtn" id="c-e" type="button">${esc(c.emo)}</button>
-    ${id || parent ? '' : '<label class="l">Type</label><select class="f" id="c-t"><option value="dep">Dépense</option><option value="rev">Revenu</option></select>'}
+  const ttl = id ? (c.parent ? 'Sous-catégorie' : 'Catégorie') : parent ? 'Nouvelle sous-catégorie de ' + esc(cat(parent).nom) : opts ? 'Nouvelle catégorie de ' + (opts.type === 'rev' ? 'revenu' : 'dépense') : 'Nouvelle catégorie';
+  sheet(`${opts ? `<div class="row" style="margin-bottom:6px"><h2 class="h2" style="margin:0">${ttl}</h2><button class="xbtn" data-catback aria-label="Retour">✕</button></div>` : head(ttl)}
+    <label class="l">Nom</label><input class="f" id="c-n" value="${esc(c.nom)}" placeholder="${c.type === 'rev' ? 'Ex. Remboursement mutuelle, Vinted…' : 'Ex. Animaux, Vacances…'}">
+    <label class="l">Emoji (touche pour choisir)</label><button class="emobtn" id="c-e" type="button">${esc(c.emo)}</button>
+    ${id || parent || opts ? '' : '<label class="l">Type</label><select class="f" id="c-t"><option value="dep">Dépense</option><option value="rev">Revenu</option></select>'}
     <button class="btn" data-savecat>Enregistrer</button>
     ${id && !c.parent ? `<p class="grp" style="margin-top:18px">Sous-catégories</p>${sl.map((x) => `<div class="it" data-cat="${x.id}"><div class="emo">${x.emo}</div><div class="t"><b>${esc(x.nom)}</b></div><span style="color:var(--ink3)">›</span></div>`).join('') || '<div class="empty">Aucune.</div>'}<button class="btn ghost" data-newsub="${id}">+ Ajouter une sous-catégorie</button>` : ''}
     ${id && !DB.tx.some((t) => t.cat === id) && !subs(id).length && !DB.fixes.some((f) => f.cat === id) ? '<button class="btn danger" data-delcat>Supprimer</button>' : ''}`);
@@ -656,9 +670,13 @@ function openCat(id, parent) {
   $('c-e').onclick = () => pickEmoji($('c-e').textContent, (e) => { $('c-e').textContent = e; });
   box.querySelector('[data-savecat]').onclick = () => {
     const nom = $('c-n').value.trim(); if (!nom) { toast('Indique un nom'); return; }
-    if (id) { c.nom = nom; c.emo = $('c-e').textContent.trim() || '🏷️'; } else DB.cats.push({id: uid(), nom, emo: $('c-e').textContent.trim() || '🏷️', type: parent ? cat(parent).type : $('c-t').value, budget: 0, parent: parent || null});
-    save(); closeSheet(); renderAll();
+    const nid = id || uid();
+    if (id) { c.nom = nom; c.emo = $('c-e').textContent.trim() || '🏷️'; } else DB.cats.push({id: nid, nom, emo: $('c-e').textContent.trim() || '🏷️', type: parent ? cat(parent).type : opts ? c.type : $('c-t').value, budget: 0, parent: parent || null});
+    save();
+    if (opts) { opts.done(nid); toast('Catégorie créée ✓'); return; }
+    closeSheet(); renderAll();
   };
+  if (opts) box.addEventListener('click', (e) => { if (e.target === box || e.target.closest('[data-catback]')) { e.stopPropagation(); opts.done(null); } });
   const del = box.querySelector('[data-delcat]');
   if (del) del.onclick = () => { if (!confirmDel()) return; DB.cats = DB.cats.filter((x) => x.id !== id); save(); closeSheet(); renderAll(); };
 }
@@ -717,6 +735,34 @@ function openGoalAdd(id) {
   setTimeout(() => { const i = $('ga'); if (i) i.focus(); }, 50);
   $('sh').querySelector('[data-gaok]').onclick = () => { const v = num($('ga').value); if (!v) return; g.epargne = Math.max(0, Math.round((g.epargne + v) * 100) / 100); save(); closeSheet(); renderAll(); toast(g.epargne >= g.cible ? '🎉 Objectif atteint !' : 'Ajouté ✓'); };
 }
+async function exporter() {
+  const blob = new Blob([JSON.stringify(DB)], {type: 'application/json'});
+  const name = 'mes-finances-' + today() + '.json';
+  const file = new File([blob], name, {type: 'application/json'});
+  if (navigator.canShare && navigator.canShare({files: [file]})) { try { await navigator.share({files: [file], title: 'Sauvegarde Mes Finances'}); } catch (e) {} return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+/* ---------- Rappel de sauvegarde du lundi ---------- */
+const jourLocal = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function dernierLundi() { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return jourLocal(d); }
+function renderRappel() {
+  const lun = dernierLundi(), show = DB.tx.length > 0 && (DB.reglages.sauvOk || '') < lun;
+  $('rappel').innerHTML = show ? `<div class="card tip rappel"><div class="row"><h2 class="h2" style="margin:0">💾 Sauvegarde de la semaine</h2></div>
+    <p class="sub" style="margin:6px 0 10px">Tes données sont uniquement sur ce téléphone : exporte une copie pour ne rien perdre si tu le changes ou le perds.</p>
+    <div class="chips"><button data-rexp>📤 Exporter</button><button data-rtuto>❓ Comment faire</button><button data-rok>✓ Fait</button></div></div>` : '';
+}
+function openTutoSauv() {
+  sheet(`${head('Sauvegarder mes données')}
+    <div class="tuto">
+      <p><b>1.</b> Touche <b>📤 Exporter</b> sur le rappel, ou ⚙️ Réglages → <b>Exporter une sauvegarde</b>.</p>
+      <p><b>2.</b> Le menu de partage s'ouvre : choisis <b>Enregistrer dans Fichiers</b>.</p>
+      <p><b>3.</b> Choisis <b>iCloud Drive</b> (idéal : la copie reste à l'abri même si tu perds ton téléphone), puis touche <b>Enregistrer</b>.</p>
+      <p><b>4.</b> Reviens dans l'appli et touche <b>✓ Fait</b> : le rappel disparaît jusqu'à lundi prochain.</p>
+      <p class="sub">🔁 <b>Pour restaurer</b> (nouveau téléphone…) : ⚙️ Réglages → <b>Restaurer une sauvegarde</b>, puis choisis le fichier le plus récent « mes-finances-date.json ».</p>
+      <p class="sub">💡 Tu peux supprimer les anciennes sauvegardes dans Fichiers, seule la plus récente compte.</p>
+    </div>
+    <button class="btn" data-rexp>📤 Exporter maintenant</button>`);
+}
 function openReglages() {
   sheet(`${head('Réglages')}
     <div class="kv"><span>Mouvements enregistrés</span><b>${DB.tx.length}</b></div>
@@ -742,13 +788,7 @@ function openReglages() {
     const ok = await bioCreate(); toast(ok ? 'Face ID activé ✓' : 'Face ID indisponible sur cet appareil'); if (ok) closeSheet();
   };
   $('r-paie').onchange = () => { const v = Math.min(31, Math.max(1, parseInt($('r-paie').value, 10) || 25)); DB.reglages.paie = v; save(); renderAll(); toast('Jour de paie : le ' + v); };
-  box.querySelector('[data-export]').onclick = async () => {
-    const blob = new Blob([JSON.stringify(DB)], {type: 'application/json'});
-    const name = 'mes-finances-' + today() + '.json';
-    const file = new File([blob], name, {type: 'application/json'});
-    if (navigator.canShare && navigator.canShare({files: [file]})) { try { await navigator.share({files: [file], title: 'Sauvegarde Mes Finances'}); return; } catch (e) { return; } }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
-  };
+  box.querySelector('[data-export]').onclick = exporter;
   box.querySelector('[data-import]').onchange = (e) => {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
@@ -823,6 +863,9 @@ document.addEventListener('click', (e) => {
   const sh = e.target.closest('#sh');
   if (sh && (e.target === sh || e.target.closest('[data-close]'))) { closeSheet(); return; }
   const t = e.target.closest('[data-tab]'); if (t) { showTab(t.dataset.tab); window.scrollTo(0, 0); return; }
+  if (e.target.closest('[data-rexp]')) { exporter(); return; }
+  if (e.target.closest('[data-rtuto]')) { openTutoSauv(); return; }
+  if (e.target.closest('[data-rok]')) { DB.reglages.sauvOk = jourLocal(new Date()); save(); renderRappel(); toast('Merci ! Prochain rappel lundi 👍'); return; }
   const g = e.target.closest('[data-goto]'); if (g) { showTab(g.dataset.goto); return; }
   const tx = e.target.closest('[data-tx]'); if (tx) { openTx(tx.dataset.tx); return; }
   const c = e.target.closest('[data-cat]'); if (c) { openCat(c.dataset.cat); return; }
