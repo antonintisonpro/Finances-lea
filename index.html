@@ -122,8 +122,14 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 .tip .btn{background:#fff;color:#2b2d7a}
 .tip .chips button{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25);color:#fff}
 .tuto p{margin:0 0 12px;font-size:15px;line-height:1.45}
-.tip.rappel{background:linear-gradient(150deg,#065f46,#10b981)!important}
-.tip.rappel .chips button{background:rgba(255,255,255,.18)}
+.tip.rappel{background:linear-gradient(150deg,#b91c1c,#f97316)!important;border:3px solid #fde047!important;animation:alerte 1.6s ease-in-out infinite}
+@keyframes alerte{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.75)}50%{box-shadow:0 0 0 12px rgba(249,115,22,0)}}
+@media (prefers-reduced-motion:reduce){.tip.rappel{animation:none}}
+.badge-imp{display:inline-block;background:#fde047;color:#7c2d12;font-weight:800;font-size:12px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;margin-bottom:8px}
+.tip.rappel .btn{background:#fff;color:#b91c1c;font-weight:800;margin:4px 0 0}
+.tip.rappel .chips button{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4)}
+.pop-ico{font-size:56px;text-align:center;margin:4px 0}
+.pop-t{font-size:22px;font-weight:800;text-align:center;margin:0 0 8px}
 .tip.warn{background:linear-gradient(150deg,#7a1f3d,#d0436a)}
 .donut{display:flex;align-items:center;gap:16px}
 .donut svg{flex:none}
@@ -739,29 +745,47 @@ async function exporter() {
   const blob = new Blob([JSON.stringify(DB)], {type: 'application/json'});
   const name = 'mes-finances-' + today() + '.json';
   const file = new File([blob], name, {type: 'application/json'});
-  if (navigator.canShare && navigator.canShare({files: [file]})) { try { await navigator.share({files: [file], title: 'Sauvegarde Mes Finances'}); } catch (e) {} return; }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  if (navigator.canShare && navigator.canShare({files: [file]})) { try { await navigator.share({files: [file], title: 'Sauvegarde Mes Finances'}); return true; } catch (e) { return false; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); return true;
 }
 /* ---------- Rappel de sauvegarde du lundi ---------- */
 const jourLocal = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 function dernierLundi() { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return jourLocal(d); }
 function renderRappel() {
-  const lun = dernierLundi(), show = DB.tx.length > 0 && (DB.reglages.sauvOk || '') < lun;
-  $('rappel').innerHTML = show ? `<div class="card tip rappel"><div class="row"><h2 class="h2" style="margin:0">💾 Sauvegarde de la semaine</h2></div>
-    <p class="sub" style="margin:6px 0 10px">Tes données sont uniquement sur ce téléphone : exporte une copie pour ne rien perdre si tu le changes ou le perds.</p>
-    <div class="chips"><button data-rexp>📤 Exporter</button><button data-rtuto>❓ Comment faire</button><button data-rok>✓ Fait</button></div></div>` : '';
+  const show = rappelDu();
+  $('rappel').innerHTML = show ? `<div class="card tip rappel"><span class="badge-imp">⚠️ IMPORTANT</span>
+    <h2 class="h2" style="margin:0">💾 Sauvegarde tes données</h2>
+    <p class="sub" style="margin:6px 0 10px">Tout est uniquement sur ce téléphone. S'il est perdu, cassé ou changé <b style="color:#fff">sans sauvegarde, tout est perdu</b>. 1 minute par semaine suffit.</p>
+    <button class="btn" data-rexp>📤 Sauvegarder maintenant</button>
+    <div class="chips"><button data-rtuto>❓ Comment faire</button><button data-rok>✓ C'est fait</button></div></div>` : '';
+  let vu = ''; try { vu = localStorage.getItem('mf_pop') || ''; } catch (e) {}
+  if (show && vu !== jourLocal(new Date()) && !$('sh')) { try { localStorage.setItem('mf_pop', jourLocal(new Date())); } catch (e) {} openPopSauv(); }
+}
+const rappelDu = () => DB.tx.length > 0 && (DB.reglages.sauvOk || '') < dernierLundi();
+function openPopSauv() {
+  sheet(`<div class="pop-ico">🚨</div><div style="text-align:center"><span class="badge-imp">⚠️ IMPORTANT</span></div><p class="pop-t">Sauvegarde de la semaine</p>
+    <p class="sub" style="text-align:center;margin:0 0 14px">Tes finances sont enregistrées <b>uniquement sur ce téléphone</b>.<br>Sans sauvegarde, une perte ou un changement de téléphone = <b>tout est perdu</b>.</p>
+    <button class="btn" data-rexp style="background:linear-gradient(150deg,#b91c1c,#f97316);color:#fff;font-weight:800">📤 Sauvegarder maintenant</button>
+    <button class="btn ghost" data-rtuto>❓ Comment faire</button>
+    <button class="btn ghost" data-rok>✓ C'est déjà fait</button>
+    <button class="btn ghost" data-close style="opacity:.7">Plus tard (le rappel reste affiché)</button>`);
+}
+function openConfirmSauv() {
+  sheet(`<div class="pop-ico">✅</div><p class="pop-t">Sauvegarde enregistrée ?</p>
+    <p class="sub" style="text-align:center;margin:0 0 14px">Si le fichier est bien dans Fichiers (idéalement iCloud Drive), confirme pour masquer le rappel jusqu'à lundi prochain.</p>
+    <button class="btn" data-rok>✓ Oui, c'est fait</button><button class="btn ghost" data-close>Pas encore</button>`);
 }
 function openTutoSauv() {
   sheet(`${head('Sauvegarder mes données')}
     <div class="tuto">
-      <p><b>1.</b> Touche <b>📤 Exporter</b> sur le rappel, ou ⚙️ Réglages → <b>Exporter une sauvegarde</b>.</p>
+      <p><b>1.</b> Touche <b>📤 Sauvegarder maintenant</b> sur le rappel, ou ⚙️ Réglages → <b>Exporter une sauvegarde</b>.</p>
       <p><b>2.</b> Le menu de partage s'ouvre : choisis <b>Enregistrer dans Fichiers</b>.</p>
       <p><b>3.</b> Choisis <b>iCloud Drive</b> (idéal : la copie reste à l'abri même si tu perds ton téléphone), puis touche <b>Enregistrer</b>.</p>
-      <p><b>4.</b> Reviens dans l'appli et touche <b>✓ Fait</b> : le rappel disparaît jusqu'à lundi prochain.</p>
+      <p><b>4.</b> Reviens dans l'appli et touche <b>✓ C'est fait</b> : le rappel disparaît jusqu'à lundi prochain.</p>
       <p class="sub">🔁 <b>Pour restaurer</b> (nouveau téléphone…) : ⚙️ Réglages → <b>Restaurer une sauvegarde</b>, puis choisis le fichier le plus récent « mes-finances-date.json ».</p>
       <p class="sub">💡 Tu peux supprimer les anciennes sauvegardes dans Fichiers, seule la plus récente compte.</p>
     </div>
-    <button class="btn" data-rexp>📤 Exporter maintenant</button>`);
+    <button class="btn" data-rexp>📤 Sauvegarder maintenant</button><button class="btn ghost" data-rok>✓ C'est fait</button>`);
 }
 function openReglages() {
   sheet(`${head('Réglages')}
@@ -863,9 +887,9 @@ document.addEventListener('click', (e) => {
   const sh = e.target.closest('#sh');
   if (sh && (e.target === sh || e.target.closest('[data-close]'))) { closeSheet(); return; }
   const t = e.target.closest('[data-tab]'); if (t) { showTab(t.dataset.tab); window.scrollTo(0, 0); return; }
-  if (e.target.closest('[data-rexp]')) { exporter(); return; }
+  if (e.target.closest('[data-rexp]')) { exporter().then((ok) => { if (ok && rappelDu()) openConfirmSauv(); }); return; }
   if (e.target.closest('[data-rtuto]')) { openTutoSauv(); return; }
-  if (e.target.closest('[data-rok]')) { DB.reglages.sauvOk = jourLocal(new Date()); save(); renderRappel(); toast('Merci ! Prochain rappel lundi 👍'); return; }
+  if (e.target.closest('[data-rok]')) { DB.reglages.sauvOk = jourLocal(new Date()); save(); closeSheet(); renderRappel(); toast('Merci ! Prochain rappel lundi 👍'); return; }
   const g = e.target.closest('[data-goto]'); if (g) { showTab(g.dataset.goto); return; }
   const tx = e.target.closest('[data-tx]'); if (tx) { openTx(tx.dataset.tx); return; }
   const c = e.target.closest('[data-cat]'); if (c) { openCat(c.dataset.cat); return; }
