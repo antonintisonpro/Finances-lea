@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Mes Finances</title>
-<script>try{const t=JSON.parse(localStorage.getItem('mf_theme')||'{}');if(t.m&&t.m!=='auto')document.documentElement.dataset.mode=t.m;document.documentElement.dataset.acc=t.a||'vert';}catch(e){}</script>
+<script>try{const t=JSON.parse(localStorage.getItem('mf_theme')||'{}');if(t.m&&t.m!=='auto')document.documentElement.dataset.mode=t.m;document.documentElement.dataset.acc=t.a||'vert';if(t.t)document.documentElement.dataset.taille=t.t;if(t.f)document.documentElement.classList.add('flou');}catch(e){}</script>
 <style>
 :root{color-scheme:light;--bg:#f4f5f9;--card:#fff;--line:#e5e7ef;--ink:#121528;--ink2:#4b5069;--ink3:#868aa3;--acc:#5b5bd6;--acc2:#8b7cf6;--dep:#e0486b;--rev:#12a26b;--warn:#f59e0b;--r:18px}
 @media (prefers-color-scheme:dark){:root:not([data-mode=clair]){color-scheme:dark;--bg:#0d0f1c;--card:#161a2e;--line:#262b45;--ink:#eef0fb;--ink2:#bcc0d8;--ink3:#868aa8;--acc:#8b8cff;--acc2:#a78bfa;--dep:#ff6b8b;--rev:#34d399}}
@@ -256,6 +256,19 @@ label.l{font-size:12px;color:var(--ink3);font-weight:500;letter-spacing:.02em}
 main>section,#rappel{display:flex;flex-direction:column;gap:14px}
 #rappel:empty{display:none}
 main>section.hide{display:none!important}
+.amt{transition:filter .25s}
+:root.flou .amt{filter:blur(7px);-webkit-user-select:none;user-select:none}
+:root.flou svg .amt,:root.flou svg .ax{opacity:0}
+:root[data-taille=grand] body{zoom:1.08}
+:root[data-taille=tgrand] body{zoom:1.16}
+.sumoff .sum{display:none}
+.rg-sec{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);font-weight:600;margin:22px 0 2px;padding-top:14px;border-top:1px solid var(--line)}
+.rg-note{font-size:12.5px;color:var(--ink3);margin:4px 0 0}
+.sw span small{display:block;font-size:12px;color:var(--ink3);margin-top:1px}
+.sw span{padding-right:12px}
+.faceid.big{font-size:16px;padding:13px 24px}
+.lock .hint{font-size:13px;opacity:.75;margin:-8px 0 14px}
+.danger{background:#d92d4a!important}
 </style>
 </head>
 <body>
@@ -263,7 +276,8 @@ main>section.hide{display:none!important}
   <svg width="56" height="56" viewBox="0 0 56 56"><rect width="56" height="56" rx="14" fill="rgba(255,255,255,.18)"/><rect x="13" y="18" width="30" height="22" rx="5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="36" cy="29" r="2.5" fill="#fff"/></svg>
   <h2 id="lock-t">Mes Finances</h2>
   <p id="lock-p">Entre ton code</p>
-  <button class="faceid hide" id="btn-bio">Déverrouiller avec Face ID</button>
+  <button class="faceid big hide" id="btn-bio">🙂 Déverrouiller avec Face ID</button>
+  <p class="hint hide" id="lock-hint">Touche l'écran pour lancer Face ID</p>
   <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
   <div class="pad" id="pad"></div>
 </div>
@@ -271,6 +285,7 @@ main>section.hide{display:none!important}
 <header class="top">
   <div class="top-row">
     <div class="hello"><small id="h-date"></small><h1 id="h-salut">Bonjour 👋</h1></div>
+    <button class="ibtn" id="btn-oeil" aria-label="Flouter les montants"></button>
     <button class="ibtn" id="btn-reglages" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
   <div class="month"><button id="m-prev" aria-label="Mois précédent">‹</button><b id="m-lab"></b><button id="m-next" aria-label="Mois suivant">›</button></div>
@@ -302,8 +317,14 @@ main>section.hide{display:none!important}
 <script>
 'use strict';
 const KEY = 'mes_finances_v1', PINK = 'mes_finances_pin';
-const fE = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 2});
-const fE0 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0});
+const _fE = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 2});
+const _fE0 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0});
+/* Montants entourés d'un <span class="amt"> pour pouvoir les flouter (réglage Confidentialité) */
+const fE = {format: (v) => '<span class="amt">' + (DB && DB.reglages && DB.reglages.centimes === false ? _fE0 : _fE).format(v) + '</span>'};
+const fE0 = {format: (v) => '<span class="amt">' + _fE0.format(v) + '</span>'};
+const CARTES = [['alerte', '🚨 Alertes de budget'], ['suggestion', '💡 Suggestion d\'épargne'], ['bilan', '📋 Bilan du mois'], ['rapide', '⚡ Ajout rapide'], ['remb', '🩺 Remboursements en attente'], ['avenir', '🗓️ D\'ici ta paie'], ['cats', '📊 Dépenses par catégorie'], ['fixvar', '📌 Fixes et variables'], ['budgets', '🎯 Mes budgets du mois'], ['recents', '🕒 Derniers mouvements']];
+const JOURS = [[1, 'Lundi'], [2, 'Mardi'], [3, 'Mercredi'], [4, 'Jeudi'], [5, 'Vendredi'], [6, 'Samedi'], [0, 'Dimanche'], [-1, 'Jamais']];
+const ONGLETS = [['accueil', 'Accueil'], ['mouv', 'Mouvements'], ['analyses', 'Analyses'], ['budgets', 'Budgets'], ['patrimoine', 'Patrimoine']];
 const fP = new Intl.NumberFormat('fr-FR', {style: 'percent', maximumFractionDigits: 0});
 const $ = (id) => document.getElementById(id);
 const esc = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -322,7 +343,10 @@ function load() {
   if (!DB) DB = {tx: [], cats: DEF.dep.map(([id, nom, emo]) => ({id, nom, emo, type: 'dep', budget: 0})).concat(DEF.rev.map(([id, nom, emo]) => ({id, nom, emo, type: 'rev', budget: 0}))), goals: []};
   DB.fixes = DB.fixes || [];
   DB.comptes = DB.comptes || [];
-  DB.reglages = Object.assign({paie: 25, delai: 60, mode: 'auto', acc: 'vert', prenom: 'Léa'}, DB.reglages || {});
+  DB.reglages = Object.assign({paie: 25, delai: 60, mode: 'auto', acc: 'vert', prenom: 'Léa', flou: false, flouAuto: false, oeil: true, centimes: true, taille: 'normal', onglet: 'accueil', resume: true, sauvJour: 1, bioAuto: true}, DB.reglages || {});
+  DB.reglages.cartes = Object.assign(Object.fromEntries(CARTES.map(([k]) => [k, true])), DB.reglages.cartes || {});
+  if (DB.reglages.flouAuto) DB.reglages.flou = true;
+  S.tab = DB.reglages.onglet || 'accueil';
   applyTheme();
   DB.cats.forEach((c) => { if (c.parent === undefined) c.parent = null; });
   if (!DB.v2cats) { DEF.rev.forEach(([id, nom, emo]) => { if (!DB.cats.some((c) => c.id === id)) DB.cats.push({id, nom, emo, type: 'rev', budget: 0, parent: null}); }); DB.v2cats = 1; }
@@ -332,8 +356,16 @@ function applyTheme() {
   const r = document.documentElement;
   if (DB.reglages.mode === 'auto') r.removeAttribute('data-mode'); else r.dataset.mode = DB.reglages.mode;
   r.dataset.acc = DB.reglages.acc;
-  try { localStorage.setItem('mf_theme', JSON.stringify({m: DB.reglages.mode, a: DB.reglages.acc})); } catch (e) {}
+  r.dataset.taille = DB.reglages.taille || 'normal';
+  r.classList.toggle('flou', !!DB.reglages.flou);
+  document.body.classList.toggle('sumoff', DB.reglages.resume === false);
+  const o = $('btn-oeil');
+  if (o) { o.classList.toggle('hide', DB.reglages.oeil === false); o.innerHTML = DB.reglages.flou ? EYE_OFF : EYE_ON; o.setAttribute('aria-label', DB.reglages.flou ? 'Afficher les montants' : 'Flouter les montants'); }
+  try { localStorage.setItem('mf_theme', JSON.stringify({m: DB.reglages.mode, a: DB.reglages.acc, t: DB.reglages.taille, f: !!DB.reglages.flou})); } catch (e) {}
 }
+const EYE_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19c-6.5 0-10-7-10-7a18.5 18.5 0 0 1 4.2-5.1M9.9 5.2A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M2 2l20 20"/></svg>';
+function basculerFlou() { DB.reglages.flou = !DB.reglages.flou; save(); applyTheme(); toast(DB.reglages.flou ? 'Montants floutés 🙈' : 'Montants visibles 👀'); }
 /* Dépenses et revenus fixes : une ligne créée chaque mois, au jour choisi */
 function genFixes() {
   const now = today(), cur = ym(now);
@@ -365,7 +397,7 @@ const txMois = (m) => DB.tx.filter((t) => ym(t.date) === m);
 const tot = (l, type) => l.filter((t) => t.type === type).reduce((s, t) => s + t.montant, 0);
 function moisLab(m) { const [y, mo] = m.split('-'); return new Date(+y, +mo - 1, 1).toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'}); }
 function addMois(m, n) { const [y, mo] = m.split('-').map(Number); const d = new Date(y, mo - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
-function toast(msg) { document.querySelectorAll('.toast').forEach((t) => t.remove()); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
+function toast(msg) { document.querySelectorAll('.toast').forEach((t) => t.remove()); const t = document.createElement('div'); t.className = 'toast'; t.textContent = String(msg).replace(/<[^>]+>/g, ''); document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
 
 /* ---------- Rendu ---------- */
 function renderHead() {
@@ -374,9 +406,9 @@ function renderHead() {
   $('h-salut').textContent = (h >= 18 || h < 5 ? 'Bonsoir' : 'Bonjour') + (pr ? ' ' + pr : '') + (h >= 18 || h < 5 ? ' 🌙' : ' 👋');
   const l = txMois(S.mois), r = tot(l, 'rev'), d = tot(l, 'dep');
   $('m-lab').textContent = moisLab(S.mois);
-  $('s-rev').textContent = fE0.format(r);
-  $('s-dep').textContent = fE0.format(d);
-  $('s-reste').textContent = fE0.format(r - d);
+  $('s-rev').innerHTML = fE0.format(r);
+  $('s-dep').innerHTML = fE0.format(d);
+  $('s-reste').innerHTML = fE0.format(r - d);
 }
 function itemTx(t) {
   const c = cat(t.cat);
@@ -391,7 +423,7 @@ function chart6() {
   const y = (v) => t0 + (H - t0 - b) * (1 - v / max);
   const bw = (W - ml) / 6, w = bw * 0.3;
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenus et dépenses sur 6 mois">`;
-  [0, max / 2, max].forEach((v) => { s += `<line x1="${ml}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${ml - 5}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString('fr-FR') + ' k' : v}</text>`; });
+  [0, max / 2, max].forEach((v) => { s += `<line x1="${ml}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="ax" x="${ml - 5}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString('fr-FR') + ' k' : v}</text>`; });
   data.forEach((x, i) => {
     const cx = ml + i * bw + bw / 2;
     s += `<rect x="${cx - w - 1}" y="${y(x.r)}" width="${w}" height="${y(0) - y(x.r)}" rx="3" fill="var(--rev)"/>`;
@@ -472,8 +504,14 @@ function carteAVenir() {
     ${l.map(({f, date}) => `<div class="it" data-fixe="${f.id}"><div class="emo">${cat(f.cat).emo}</div><div class="t"><b>${esc(f.note || cat(f.cat).nom)}</b><span style="text-transform:capitalize">${jl(date)}</span></div><span class="${f.type === 'dep' ? 'm-dep' : 'm-rev'}">${f.type === 'dep' ? '−' : '+'}${fE.format(f.montant)}</span></div>`).join('')}</div>`;
 }
 /* ---------- Nouveautés : à chaque mise à jour, ajouter une entrée et augmenter VERSION ---------- */
-const VERSION = 2;
+const VERSION = 3;
 const NOUV = {
+  3: [
+    ['🙈', 'Flouter les montants', 'Touche l\'œil 👁 en haut de l\'écran pour cacher tes montants quand quelqu\'un regarde. Tu peux aussi les flouter à chaque ouverture.'],
+    ['🙂', 'Face ID automatique', 'Face ID se lance tout seul à l\'ouverture. Si besoin, touche simplement l\'écran pour le relancer.'],
+    ['🏠', 'Ton accueil à la carte', 'Dans ⚙️ Réglages, choisis les cartes à afficher sur l\'accueil.'],
+    ['🎨', 'Plus de réglages', 'Taille du texte, centimes ou arrondi, onglet d\'ouverture, résumé du mois, jour du rappel de sauvegarde… tout se règle dans ⚙️ Réglages.']
+  ],
   2: [
     ['🗓️', 'Calendrier des fixes', 'Dans Budgets, vois en un coup d\'œil quel jour tombent ton loyer, tes abonnements et ta paie. Touche un jour pour le détail.'],
     ['🩺', 'Remboursements santé', 'Coche « À me faire rembourser » sur une dépense, indique le montant attendu, puis relie chaque remboursement reçu à sa dépense : tu vois ton vrai reste à charge.'],
@@ -489,7 +527,10 @@ function checkNouveautes() {
   if (!S.ancien || vu >= VERSION) return;
   const l = Object.keys(NOUV).map(Number).filter((v) => v > vu && v <= VERSION).sort((a, b) => b - a).flatMap((v) => NOUV[v]);
   if (!l.length) return;
-  sheet(`<div class="pop-ico">✨</div><p class="pop-t">Nouveautés</p><p class="sub" style="text-align:center;margin:0 0 10px">Ton appli vient d'être mise à jour.</p>
+  showNouv(l, 'Ton appli vient d\'être mise à jour.');
+}
+function showNouv(l, sous) {
+  sheet(`<div class="pop-ico">✨</div><p class="pop-t">Nouveautés</p><p class="sub" style="text-align:center;margin:0 0 10px">${esc(sous)}</p>
     ${l.map(([e, t, d]) => `<div class="nv"><div class="emo">${e}</div><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
     <button class="btn" data-close>C'est parti !</button>`);
 }
@@ -570,30 +611,32 @@ function renderAccueil() {
   const buds = mains('dep').filter((c) => c.budget > 0);
   const recent = [...l].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id)).slice(0, 6);
   const sg = suggestion();
+  const K = DB.reglages.cartes, on = (k) => K[k] !== false;
   $('p-accueil').innerHTML = `
-    ${carteAlerteBud()}
-    ${sg}
-    ${carteBilanAccueil()}
-    ${carteRapide()}
-    ${carteRemb()}
-    ${carteAVenir()}
-    <div class="card">
+    ${on('alerte') ? carteAlerteBud() : ''}
+    ${on('suggestion') ? sg : ''}
+    ${on('bilan') ? carteBilanAccueil() : ''}
+    ${on('rapide') ? carteRapide() : ''}
+    ${on('remb') ? carteRemb() : ''}
+    ${on('avenir') ? carteAVenir() : ''}
+    ${on('cats') ? `<div class="card">
       <h2 class="h2">Dépenses par catégorie</h2>
       <p class="sub">${fE.format(d)} dépensés en ${esc(moisLab(S.mois))}</p>
       ${parCat.length ? parCat.map((x) => `<div class="hb"><span>${x.c.emo} ${esc(x.c.nom)}</span><div class="t" style="width:${(x.v / mx) * 100}%"></div><b>${fE0.format(x.v)} · ${fP.format(d ? x.v / d : 0)}</b></div>${x.subs.map((y) => `<div class="subc"><span>${esc(y.sc.nom)}</span><span>${fE0.format(y.v)}</span></div>`).join('')}`).join('') : '<div class="empty">Aucune dépense ce mois-ci. Touche + pour en ajouter une.</div>'}
-    </div>
-    <div class="card">
+    </div>` : ''}
+    ${on('fixvar') ? `<div class="card">
       <h2 class="h2">Fixes et variables</h2>
       <div class="kv"><span>Dépenses fixes</span><b>${fE.format(fixD)}</b></div>
       <div class="kv"><span>Dépenses variables</span><b>${fE.format(d - fixD)}</b></div>
       ${aVenir.length ? `<div class="kv"><span>Fixes encore à venir ce mois</span><b>${fE.format(aVenir.reduce((s, f) => s + f.montant, 0))}</b></div>` : ''}
       <button class="small" style="margin-top:8px" data-goto="budgets">Gérer mes fixes ›</button>
-    </div>
-    ${buds.length ? `<div class="card"><h2 class="h2">Mes budgets du mois</h2>${buds.map(budRow).join('')}</div>` : ''}
-    <div class="card">
+    </div>` : ''}
+    ${on('budgets') && buds.length ? `<div class="card"><h2 class="h2">Mes budgets du mois</h2>${buds.map(budRow).join('')}</div>` : ''}
+    ${on('recents') ? `<div class="card">
       <div class="row"><h2 class="h2">Derniers mouvements</h2>${l.length > 6 ? '<button class="small" data-goto="mouv">Tout voir</button>' : ''}</div>
       ${recent.length ? recent.map(itemTx).join('') : '<div class="empty">Rien pour l\'instant.</div>'}
-    </div>`;
+    </div>` : ''}
+    ${CARTES.every(([k]) => !on(k)) ? '<div class="empty">Toutes les cartes de l\'accueil sont masquées. ⚙️ Réglages → Accueil pour les réafficher.</div>' : ''}`;
 }
 /* ---------- Indicateurs et projection ---------- */
 function stats(m) {
@@ -669,7 +712,7 @@ function donut(parts, size) {
     s += `<path d="M${P(a, R)} A${R},${R} 0 ${L} 1 ${P(b, R)} L${P(b, r)} A${r},${r} 0 ${L} 0 ${P(a, r)} Z" fill="${p.c}" stroke="var(--card)" stroke-width="2"/>`;
     a = b;
   });
-  return s + `<text x="${R}" y="${R - 2}" text-anchor="middle" style="fill:var(--ink);font-size:15px;font-weight:700">${fE0.format(tt)}</text><text x="${R}" y="${R + 15}" text-anchor="middle" style="fill:var(--ink3);font-size:11px">total</text></svg>`;
+  return s + `<text x="${R}" y="${R - 2}" text-anchor="middle" class="amt" style="fill:var(--ink);font-size:15px;font-weight:700">${_fE0.format(tt)}</text><text x="${R}" y="${R + 15}" text-anchor="middle" style="fill:var(--ink3);font-size:11px">total</text></svg>`;
 }
 function courbeMois() {
   const cur = S.mois, prev = addMois(cur, -1);
@@ -680,7 +723,7 @@ function courbeMois() {
   const x = (i) => ml + (W - ml) * (i / 30), y = (v) => t0 + (H - t0 - bt) * (1 - v / max);
   const line = (arr, col, dash) => `<polyline points="${arr.map((v, i) => (v == null ? '' : x(i) + ',' + y(v))).filter(Boolean).join(' ')}" fill="none" stroke="${col}" stroke-width="2.5" ${dash ? 'stroke-dasharray="5 4"' : ''} stroke-linejoin="round"/>`;
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Dépenses cumulées du mois">`;
-  [0, max / 2, max].forEach((v) => { s += `<line x1="${ml}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${ml - 5}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString('fr-FR') + ' k' : v}</text>`; });
+  [0, max / 2, max].forEach((v) => { s += `<line x1="${ml}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="ax" x="${ml - 5}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString('fr-FR') + ' k' : v}</text>`; });
   [1, 10, 20, 30].forEach((d) => { s += `<text x="${x(d - 1)}" y="${H - 5}" text-anchor="middle">${d}</text>`; });
   return s + line(b, 'var(--ink3)', true) + line(a, 'var(--dep)') + '</svg>';
 }
@@ -702,7 +745,7 @@ function renderAnnee() {
   const max = niceMax(Math.max(1, ...data.map((x) => Math.max(x.r, x.d))));
   const yy = (v) => t0 + (H - t0 - bt) * (1 - v / max), bw = (W - ml) / 12, w = bw * 0.32;
   let ch = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Revenus et dépenses de l'année">`;
-  [0, max / 2, max].forEach((v) => { ch += `<line x1="${ml}" x2="${W}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--line)"/><text x="${ml - 5}" y="${yy(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString('fr-FR') + ' k' : v}</text>`; });
+  [0, max / 2, max].forEach((v) => { ch += `<line x1="${ml}" x2="${W}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--line)"/><text class="ax" x="${ml - 5}" y="${yy(v) + 4}" text-anchor="end">${v >= 1000 ? (v / 1000).toLocaleString('fr-FR') + ' k' : v}</text>`; });
   data.forEach((x, i) => { const cx = ml + i * bw + bw / 2; ch += `<rect x="${cx - w - 1}" y="${yy(x.r)}" width="${w}" height="${yy(0) - yy(x.r)}" rx="2" fill="var(--rev)"/><rect x="${cx + 1}" y="${yy(x.d)}" width="${w}" height="${yy(0) - yy(x.d)}" rx="2" fill="var(--dep)"/>${i % 2 === 0 ? `<text x="${cx}" y="${H - 5}" text-anchor="middle">${new Date(x.m + '-01').toLocaleDateString('fr-FR', {month: 'short'})}</text>` : ''}`; });
   ch += '</svg>';
   $('p-analyses').innerHTML = `${segVue()}
@@ -763,7 +806,7 @@ function chartPatri() {
   const t = (d) => Date.parse(d), a = t(h[0].d), b = t(h[h.length - 1].d) || a + 1;
   const x = (d) => ml + (W - ml - 6) * ((t(d) - a) / (b - a || 1)), y = (v) => t0 + (H - t0 - bt) * (1 - v / max);
   let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution du patrimoine">`;
-  [0, max / 2, max].forEach((v) => { s += `<line x1="${ml}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${ml - 5}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? Math.round(v / 1000).toLocaleString('fr-FR') + ' k' : Math.round(v)}</text>`; });
+  [0, max / 2, max].forEach((v) => { s += `<line x1="${ml}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text class="ax" x="${ml - 5}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? Math.round(v / 1000).toLocaleString('fr-FR') + ' k' : Math.round(v)}</text>`; });
   s += `<polygon points="${x(h[0].d)},${y(0)} ${h.map((p) => x(p.d) + ',' + y(p.v)).join(' ')} ${x(h[h.length - 1].d)},${y(0)}" fill="var(--acc)" opacity=".12"/>`;
   s += `<polyline points="${h.map((p) => x(p.d) + ',' + y(p.v)).join(' ')}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linejoin="round"/>`;
   s += `<text x="${ml}" y="${H - 5}">${new Date(h[0].d).toLocaleDateString('fr-FR', {month: 'short', year: '2-digit'})}</text><text x="${W}" y="${H - 5}" text-anchor="end">${new Date(h[h.length - 1].d).toLocaleDateString('fr-FR', {month: 'short', year: '2-digit'})}</text>`;
@@ -1031,7 +1074,9 @@ async function exporter() {
 }
 /* ---------- Rappel de sauvegarde du lundi ---------- */
 const jourLocal = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-function dernierLundi() { const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return jourLocal(d); }
+const jourSauv = () => { const j = DB.reglages.sauvJour; return j === undefined ? 1 : j; };
+const nomJourSauv = () => (JOURS.find(([v]) => v === jourSauv()) || [1, 'Lundi'])[1].toLowerCase();
+function dernierLundi() { const d = new Date(), j = Math.max(0, jourSauv()); d.setDate(d.getDate() - ((d.getDay() - j + 7) % 7)); return jourLocal(d); }
 function renderRappel() {
   const show = rappelDu();
   $('rappel').innerHTML = show ? `<div class="card tip rappel"><span class="badge-imp">⚠️ IMPORTANT</span>
@@ -1043,7 +1088,7 @@ function renderRappel() {
   const ouverture = S.boot; S.boot = false;
   if (ouverture && show && vu !== jourLocal(new Date()) && !$('sh')) { setTimeout(() => { if ($('sh')) return; try { localStorage.setItem('mf_pop', jourLocal(new Date())); } catch (e) {} openPopSauv(); }, 0); }
 }
-const rappelDu = () => DB.tx.length > 0 && (DB.reglages.sauvOk || '') < dernierLundi();
+const rappelDu = () => jourSauv() >= 0 && DB.tx.length > 0 && (DB.reglages.sauvOk || '') < dernierLundi();
 function openPopSauv() {
   sheet(`<div class="pop-ico">🚨</div><div style="text-align:center"><span class="badge-imp">⚠️ IMPORTANT</span></div><p class="pop-t">Sauvegarde de la semaine</p>
     <p class="sub" style="text-align:center;margin:0 0 14px">Tes finances sont enregistrées <b>uniquement sur ce téléphone</b>.<br>Sans sauvegarde, une perte ou un changement de téléphone = <b>tout est perdu</b>.</p>
@@ -1054,7 +1099,7 @@ function openPopSauv() {
 }
 function openConfirmSauv() {
   sheet(`<div class="pop-ico">✅</div><p class="pop-t">Sauvegarde enregistrée ?</p>
-    <p class="sub" style="text-align:center;margin:0 0 14px">Si le fichier est bien dans Fichiers (idéalement iCloud Drive), confirme pour masquer le rappel jusqu'à lundi prochain.</p>
+    <p class="sub" style="text-align:center;margin:0 0 14px">Si le fichier est bien dans Fichiers (idéalement iCloud Drive), confirme pour masquer le rappel jusqu'à ${nomJourSauv()} prochain.</p>
     <button class="btn" data-rok>✓ Oui, c'est fait</button><button class="btn ghost" data-close>Pas encore</button>`);
 }
 function openTutoSauv() {
@@ -1063,47 +1108,111 @@ function openTutoSauv() {
       <p><b>1.</b> Touche <b>📤 Sauvegarder maintenant</b> sur le rappel, ou ⚙️ Réglages → <b>Exporter une sauvegarde</b>.</p>
       <p><b>2.</b> Le menu de partage s'ouvre : choisis <b>Enregistrer dans Fichiers</b>.</p>
       <p><b>3.</b> Choisis <b>iCloud Drive</b> (idéal : la copie reste à l'abri même si tu perds ton téléphone), puis touche <b>Enregistrer</b>.</p>
-      <p><b>4.</b> Reviens dans l'appli et touche <b>✓ C'est fait</b> : le rappel disparaît jusqu'à lundi prochain.</p>
+      <p><b>4.</b> Reviens dans l'appli et touche <b>✓ C'est fait</b> : le rappel disparaît jusqu'à ${nomJourSauv()} prochain.</p>
       <p class="sub">🔁 <b>Pour restaurer</b> (nouveau téléphone…) : ⚙️ Réglages → <b>Restaurer une sauvegarde</b>, puis choisis le fichier le plus récent « mes-finances-date.json ».</p>
       <p class="sub">💡 Tu peux supprimer les anciennes sauvegardes dans Fichiers, seule la plus récente compte.</p>
     </div>
     <button class="btn" data-rexp>📤 Sauvegarder maintenant</button><button class="btn ghost" data-rok>✓ C'est fait</button>`);
 }
+const swi = (id, lab, on, sous) => `<label class="sw"><span>${lab}${sous ? `<small>${sous}</small>` : ''}</span><input type="checkbox" id="${id}" ${on ? 'checked' : ''}></label>`;
+const segm = (id, l, cur) => `<div class="seg" id="${id}">${l.map(([v, t]) => `<button data-v="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${t}</button>`).join('')}</div>`;
 function openReglages() {
+  const g = DB.reglages, K = g.cartes;
   sheet(`${head('Réglages')}
     <div class="kv"><span>Mouvements enregistrés</span><b>${DB.tx.length}</b></div>
     <div class="kv"><span>Où sont mes données ?</span><b>Uniquement sur ce téléphone</b></div>
-    <label class="l">Mon prénom (pour le message d'accueil)</label><input class="f" id="r-prenom" value="${esc(DB.reglages.prenom || '')}" placeholder="Léa">
-    <label class="l">Jour de ma paie (pour les suggestions de fin de mois)</label><input class="f" id="r-paie" type="number" min="1" max="31" value="${DB.reglages.paie}">
+    <label class="l">Mon prénom (pour le message d'accueil)</label><input class="f" id="r-prenom" value="${esc(g.prenom || '')}" placeholder="Léa">
+
+    <p class="rg-sec">🙈 Confidentialité</p>
+    ${swi('r-flou', 'Flouter les montants', g.flou, 'Pratique quand quelqu\'un regarde ton écran')}
+    ${swi('r-flouauto', 'Toujours flouter à l\'ouverture', g.flouAuto, 'Les montants sont floutés à chaque démarrage')}
+    ${swi('r-oeil', 'Bouton 👁 en haut de l\'écran', g.oeil !== false, 'Pour flouter ou afficher les montants d\'un geste')}
+
+    <p class="rg-sec">🔒 Sécurité</p>
+    <button class="btn ghost" data-faceid style="margin-top:8px">${localStorage.getItem(BIOK) ? 'Désactiver Face ID' : 'Activer Face ID'}</button>
+    ${localStorage.getItem(BIOK) ? swi('r-bioauto', 'Lancer Face ID automatiquement', g.bioAuto !== false, 'Face ID se lance dès l\'ouverture, sans toucher de bouton') : ''}
     <label class="l">Verrouiller après être sortie de l'appli</label>
-    <select class="f" id="r-delai">${[[0, 'Immédiatement'], [60, '1 minute'], [300, '5 minutes'], [900, '15 minutes'], [3600, '1 heure'], [-1, 'Jamais']].map(([v, t]) => `<option value="${v}" ${v === DB.reglages.delai ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <select class="f" id="r-delai">${[[0, 'Immédiatement'], [60, '1 minute'], [300, '5 minutes'], [900, '15 minutes'], [3600, '1 heure'], [-1, 'Jamais']].map(([v, t]) => `<option value="${v}" ${v === g.delai ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    <button class="btn ghost" data-pin>Changer mon code</button>
+
+    <p class="rg-sec">🎨 Affichage</p>
     <label class="l">Apparence</label>
-    <div class="seg" id="r-mode">${[['auto', 'Auto'], ['clair', 'Clair'], ['sombre', 'Sombre']].map(([v, t]) => `<button data-v="${v}" class="${DB.reglages.mode === v ? 'on' : ''}">${t}</button>`).join('')}</div>
+    ${segm('r-mode', [['auto', 'Auto'], ['clair', 'Clair'], ['sombre', 'Sombre']], g.mode)}
     <label class="l">Couleur</label>
-    <div class="colors" id="r-acc">${[['violet', '#5b4bd6'], ['bleu', '#2563eb'], ['rose', '#db2777'], ['vert', '#059669'], ['orange', '#ea580c']].map(([v, c]) => `<button data-v="${v}" aria-label="${v}" style="background:${c}" class="${DB.reglages.acc === v ? 'on' : ''}"></button>`).join('')}</div>
-    <button class="btn ghost" data-faceid>${localStorage.getItem(BIOK) ? 'Désactiver Face ID' : 'Activer Face ID'}</button>
+    <div class="colors" id="r-acc">${[['vert', '#0f8a66'], ['violet', '#5b4bd6'], ['bleu', '#2563eb'], ['rose', '#db2777'], ['orange', '#ea580c']].map(([v, c]) => `<button data-v="${v}" aria-label="${v}" style="background:${c}" class="${g.acc === v ? 'on' : ''}"></button>`).join('')}</div>
+    <label class="l">Taille du texte</label>
+    ${segm('r-taille', [['normal', 'Normale'], ['grand', 'Grande'], ['tgrand', 'Très grande']], g.taille || 'normal')}
+    ${swi('r-cent', 'Afficher les centimes', g.centimes !== false, 'Sinon, les montants sont arrondis à l\'euro')}
+    ${swi('r-resume', 'Résumé du mois en haut', g.resume !== false, 'Revenus, dépenses et reste sous le mois')}
+    <label class="l">Onglet à l'ouverture</label>
+    <select class="f" id="r-onglet">${ONGLETS.map(([v, t]) => `<option value="${v}" ${v === (g.onglet || 'accueil') ? 'selected' : ''}>${t}</option>`).join('')}</select>
+
+    <p class="rg-sec">🏠 Cartes de l'accueil</p>
+    <p class="rg-note">Choisis ce que tu veux voir sur l'accueil.</p>
+    <div id="r-cartes">${CARTES.map(([k, t]) => swi('rc-' + k, t, K[k] !== false)).join('')}</div>
+
+    <p class="rg-sec">💶 Budget</p>
+    <label class="l">Jour de ma paie (pour les suggestions de fin de mois)</label><input class="f" id="r-paie" type="number" min="1" max="31" value="${g.paie}">
+    <label class="l">M'alerter quand un budget atteint (%)</label><input class="f" id="r-seuil" type="number" inputmode="numeric" min="10" max="100" value="${g.seuil || 80}">
+
+    <p class="rg-sec">💾 Sauvegarde</p>
+    <label class="l">Jour du rappel de sauvegarde</label>
+    <select class="f" id="r-sjour">${JOURS.map(([v, t]) => `<option value="${v}" ${v === jourSauv() ? 'selected' : ''}>${t}</option>`).join('')}</select>
     <button class="btn" data-export>Exporter une sauvegarde</button>
     <label class="btn ghost" style="display:block;text-align:center">Restaurer une sauvegarde<input type="file" accept="application/json,.json" data-import hidden></label>
-    <button class="btn ghost" data-pin>Changer mon code</button>
-    <p style="font-size:13px;color:var(--ink3);margin-top:14px">Pense à exporter une sauvegarde de temps en temps (dans Fichiers ou iCloud) : si tu changes de téléphone, tu pourras tout restaurer.</p>`);
+    <p style="font-size:13px;color:var(--ink3);margin-top:10px">Pense à exporter une sauvegarde de temps en temps (dans Fichiers ou iCloud) : si tu changes de téléphone, tu pourras tout restaurer.</p>
+
+    <p class="rg-sec">ℹ️ Appli</p>
+    <button class="btn ghost" data-nouv style="margin-top:8px">✨ Voir les nouveautés</button>
+    <button class="btn ghost" data-raz>🗑️ Effacer toutes mes données</button>
+    <p class="rg-note" style="text-align:center;margin-top:12px">Mes Finances · version ${VERSION}</p>`);
   const box = $('sh');
-  $('r-delai').onchange = () => { DB.reglages.delai = Number($('r-delai').value); save(); toast('Réglage enregistré ✓'); };
-  $('r-mode').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; DB.reglages.mode = b.dataset.v; save(); applyTheme(); $('r-mode').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
-  $('r-acc').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; DB.reglages.acc = b.dataset.v; save(); applyTheme(); $('r-acc').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+  const ok = (m) => toast(m || 'Réglage enregistré ✓');
+  const chk = (id, fn) => { const el = $(id); if (el) el.onchange = () => { fn(el.checked); save(); }; };
+  const seg = (id, fn) => { $(id).onclick = (e) => { const b = e.target.closest('button'); if (!b) return; fn(b.dataset.v); save(); $(id).querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); }; };
+  chk('r-flou', (v) => { g.flou = v; applyTheme(); ok(v ? 'Montants floutés 🙈' : 'Montants visibles 👀'); });
+  chk('r-flouauto', (v) => { g.flouAuto = v; if (v) { g.flou = true; $('r-flou').checked = true; applyTheme(); } ok(); });
+  chk('r-oeil', (v) => { g.oeil = v; applyTheme(); ok(); });
+  chk('r-bioauto', (v) => { g.bioAuto = v; ok(); });
+  chk('r-cent', (v) => { g.centimes = v; renderAll(); ok(); });
+  chk('r-resume', (v) => { g.resume = v; applyTheme(); ok(); });
+  CARTES.forEach(([k]) => chk('rc-' + k, (v) => { g.cartes[k] = v; renderAccueil(); }));
+  seg('r-mode', (v) => { g.mode = v; applyTheme(); });
+  seg('r-taille', (v) => { g.taille = v; applyTheme(); });
+  $('r-acc').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; g.acc = b.dataset.v; save(); applyTheme(); $('r-acc').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+  $('r-delai').onchange = () => { g.delai = Number($('r-delai').value); save(); ok(); };
+  $('r-onglet').onchange = () => { g.onglet = $('r-onglet').value; save(); ok('Onglet d\'ouverture : ' + ONGLETS.find(([v]) => v === g.onglet)[1]); };
+  $('r-sjour').onchange = () => { g.sauvJour = Number($('r-sjour').value); save(); renderRappel(); ok(g.sauvJour < 0 ? 'Rappel de sauvegarde désactivé' : 'Rappel chaque ' + nomJourSauv() + ' ✓'); };
+  $('r-seuil').onchange = () => { const v = Math.round(num($('r-seuil').value)); g.seuil = v >= 10 && v <= 100 ? v : 80; $('r-seuil').value = g.seuil; save(); renderAccueil(); renderBudgets(); ok('Alerte à ' + g.seuil + ' % ✓'); };
   box.querySelector('[data-faceid]').onclick = async () => {
     if (localStorage.getItem(BIOK)) { localStorage.removeItem(BIOK); toast('Face ID désactivé'); closeSheet(); return; }
-    const ok = await bioCreate(); toast(ok ? 'Face ID activé ✓' : 'Face ID indisponible sur cet appareil'); if (ok) closeSheet();
+    const r = await bioCreate(); toast(r ? 'Face ID activé ✓' : 'Face ID indisponible sur cet appareil'); if (r) { g.bioAuto = true; save(); closeSheet(); }
   };
-  $('r-prenom').onchange = () => { DB.reglages.prenom = $('r-prenom').value.trim(); save(); renderHead(); toast('Prénom enregistré ✓'); };
-  $('r-paie').onchange = () => { const v = Math.min(31, Math.max(1, parseInt($('r-paie').value, 10) || 25)); DB.reglages.paie = v; save(); renderAll(); toast('Jour de paie : le ' + v); };
+  $('r-prenom').onchange = () => { g.prenom = $('r-prenom').value.trim(); save(); renderHead(); ok('Prénom enregistré ✓'); };
+  $('r-paie').onchange = () => { const v = Math.min(31, Math.max(1, parseInt($('r-paie').value, 10) || 25)); g.paie = v; save(); renderAll(); ok('Jour de paie : le ' + v); };
   box.querySelector('[data-export]').onclick = exporter;
   box.querySelector('[data-import]').onchange = (e) => {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = () => { try { const d = JSON.parse(r.result); if (!d.tx || !d.cats) throw 0; DB = d; save(); closeSheet(); renderAll(); toast('Sauvegarde restaurée ✓'); } catch (x) { toast('Fichier non reconnu'); } };
+    r.onload = () => { try { const d = JSON.parse(r.result); if (!d.tx || !d.cats) throw 0; DB = d; save(); load(); closeSheet(); renderAll(); toast('Sauvegarde restaurée ✓'); } catch (x) { toast('Fichier non reconnu'); } };
     r.readAsText(f);
   };
   box.querySelector('[data-pin]').onclick = () => { closeSheet(); startLock('new'); };
+  box.querySelector('[data-nouv]').onclick = () => { const l = Object.keys(NOUV).map(Number).sort((a, b) => b - a).flatMap((v) => NOUV[v]); showNouv(l, 'Tout ce que ton appli sait faire.'); };
+  box.querySelector('[data-raz]').onclick = openRaz;
+}
+function openRaz() {
+  sheet(`${head('Effacer toutes mes données')}
+    <p class="sub">Tous tes mouvements, catégories, budgets, fixes, comptes et objectifs seront supprimés de ce téléphone, ainsi que ton code et Face ID. <b>C'est définitif.</b></p>
+    <button class="btn ghost" data-export>📤 Faire d'abord une sauvegarde</button>
+    <label class="l">Pour confirmer, écris EFFACER</label><input class="f" id="raz-c" autocomplete="off" autocapitalize="characters" placeholder="EFFACER">
+    <button class="btn danger" id="raz-go">Tout effacer</button>`);
+  $('sh').querySelector('[data-export]').onclick = exporter;
+  $('raz-go').onclick = () => {
+    if ($('raz-c').value.trim().toUpperCase() !== 'EFFACER') { toast('Écris EFFACER pour confirmer'); return; }
+    try { [KEY, PINK, BIOK, 'mf_theme', 'mf_vu', 'mf_pop'].forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+    location.reload();
+  };
 }
 
 /* ---------- Code à 4 chiffres ---------- */
@@ -1140,10 +1249,26 @@ function startLock(mode) {
   dots();
   const bio = mode === 'check' && !!localStorage.getItem(BIOK);
   $('btn-bio').classList.toggle('hide', !bio);
-  if (bio) setTimeout(tryBio, 300);
+  $('lock-hint').classList.add('hide');
+  bioEchec = false;
+  if (bio && !(DB && DB.reglages && DB.reglages.bioAuto === false)) setTimeout(() => tryBio(true), 250);
 }
-async function tryBio() { if (await bioCheck()) { $('lock').classList.add('hide'); unlockedAt = Date.now(); } }
-$('btn-bio').onclick = tryBio;
+/* Face ID automatique : on le lance dès l'ouverture. Si l'iPhone exige un geste,
+   le premier toucher n'importe où sur l'écran de verrouillage (hors clavier) le relance. */
+let bioEnCours = false, bioEchec = false;
+async function tryBio(auto) {
+  if (bioEnCours || $('lock').classList.contains('hide')) return;
+  bioEnCours = true;
+  const ok = await bioCheck();
+  bioEnCours = false;
+  if (ok) { $('lock').classList.add('hide'); unlockedAt = Date.now(); return; }
+  if (auto) { bioEchec = true; $('lock-hint').classList.remove('hide'); }
+}
+$('btn-bio').onclick = (e) => { e.stopPropagation(); tryBio(); };
+$('lock').addEventListener('click', (e) => {
+  if (e.target.closest('#pad') || e.target.closest('#btn-bio') || lockMode !== 'check' || !localStorage.getItem(BIOK)) return;
+  if (bioEchec || (DB && DB.reglages && DB.reglages.bioAuto !== false)) { bioEchec = false; $('lock-hint').classList.add('hide'); tryBio(); }
+});
 function dots() { [...$('dots').children].forEach((d, i) => d.classList.toggle('on', i < pin.length)); }
 $('pad').innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'].map((k) => `<button data-k="${k}">${k}</button>`).join('');
 $('pad').addEventListener('click', async (e) => {
@@ -1173,7 +1298,7 @@ document.addEventListener('click', (e) => {
   const t = e.target.closest('[data-tab]'); if (t) { showTab(t.dataset.tab); window.scrollTo(0, 0); return; }
   if (e.target.closest('[data-rexp]')) { exporter().then((ok) => { if (ok && rappelDu()) openConfirmSauv(); }); return; }
   if (e.target.closest('[data-rtuto]')) { openTutoSauv(); return; }
-  if (e.target.closest('[data-rok]')) { DB.reglages.sauvOk = jourLocal(new Date()); save(); closeSheet(); renderRappel(); toast('Merci ! Prochain rappel lundi 👍'); return; }
+  if (e.target.closest('[data-rok]')) { DB.reglages.sauvOk = jourLocal(new Date()); save(); closeSheet(); renderRappel(); toast('Merci ! Prochain rappel ' + nomJourSauv() + ' 👍'); return; }
   const cj = e.target.closest('[data-calj]'); if (cj) { S.calJ = cj.dataset.calj; const y0 = window.scrollY; renderBudgets(); window.scrollTo(0, y0); return; }
   if (e.target.closest('[data-gocal]')) { e.preventDefault(); showTab('budgets'); const c = $('cal'); if (c) c.scrollIntoView({block: 'start'}); window.scrollBy(0, -190); return; }
   const rb = e.target.closest('[data-remb]'); if (rb) { openRemb(rb.dataset.remb); return; }
@@ -1202,6 +1327,7 @@ document.addEventListener('change', (e) => {
 });
 $('fab').onclick = () => openTx();
 $('btn-reglages').onclick = openReglages;
+$('btn-oeil').onclick = basculerFlou;
 $('m-prev').onclick = () => { S.mois = addMois(S.mois, -1); renderAll(); };
 $('m-next').onclick = () => { S.mois = addMois(S.mois, 1); renderAll(); };
 
