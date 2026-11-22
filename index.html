@@ -216,7 +216,7 @@ const DEF = {
   dep: [['courses', 'Courses', '🛒'], ['logement', 'Logement', '🏠'], ['transport', 'Transport', '⛽'], ['sante', 'Santé', '💊'], ['shopping', 'Shopping', '🛍️'], ['resto', 'Restaurants', '🍽️'], ['loisirs', 'Loisirs', '🎉'], ['abos', 'Abonnements', '📱'], ['beaute', 'Beauté', '💅'], ['cadeaux', 'Cadeaux', '🎁'], ['enfants', 'Enfants', '🧸'], ['autres', 'Autres', '📦']],
   rev: [['salaire', 'Salaire', '💶'], ['prime', 'Prime', '⭐'], ['rembours', 'Remboursements santé', '🩺'], ['virements', 'Virements reçus', '🔁'], ['ventes', 'Ventes (Vinted…)', '🏷️'], ['aides', 'Aides', '🤝'], ['autres_r', 'Autres', '➕']]
 };
-let DB, S = {tab: 'accueil', mois: ym(today()), q: '', fCat: ''};
+let DB, S = {tab: 'accueil', mois: ym(today()), q: '', fCat: '', boot: true};
 
 function load() {
   try { DB = JSON.parse(localStorage.getItem(KEY)); } catch (e) { DB = null; }
@@ -759,7 +759,8 @@ function renderRappel() {
     <button class="btn" data-rexp>📤 Sauvegarder maintenant</button>
     <div class="chips"><button data-rtuto>❓ Comment faire</button><button data-rok>✓ C'est fait</button></div></div>` : '';
   let vu = ''; try { vu = localStorage.getItem('mf_pop') || ''; } catch (e) {}
-  if (show && vu !== jourLocal(new Date()) && !$('sh')) { try { localStorage.setItem('mf_pop', jourLocal(new Date())); } catch (e) {} openPopSauv(); }
+  const ouverture = S.boot; S.boot = false;
+  if (ouverture && show && vu !== jourLocal(new Date()) && !$('sh')) { setTimeout(() => { if ($('sh')) return; try { localStorage.setItem('mf_pop', jourLocal(new Date())); } catch (e) {} openPopSauv(); }, 0); }
 }
 const rappelDu = () => DB.tx.length > 0 && (DB.reglages.sauvOk || '') < dernierLundi();
 function openPopSauv() {
@@ -879,7 +880,7 @@ $('pad').addEventListener('click', async (e) => {
 let unlockedAt = 0, hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') hiddenAt = Date.now();
-  else { genFixes(); renderAll(); if (localStorage.getItem(PINK) && hiddenAt && DB.reglages.delai >= 0 && Date.now() - hiddenAt >= DB.reglages.delai * 1000) { closeSheet(); startLock('check'); } }
+  else { genFixes(); S.boot = true; renderAll(); if (localStorage.getItem(PINK) && hiddenAt && DB.reglages.delai >= 0 && Date.now() - hiddenAt >= DB.reglages.delai * 1000) { closeSheet(); startLock('check'); } }
 });
 
 /* ---------- Interactions ---------- */
