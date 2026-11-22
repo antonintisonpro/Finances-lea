@@ -124,6 +124,10 @@ input.big{font-size:30px;font-weight:700;text-align:center;padding:14px}
 .tag.remb{background:color-mix(in srgb,#0ea5e9 16%,transparent);color:#0284c7}
 .chips.quick button{font-size:14px;padding:8px 12px}
 .chips.quick small{color:var(--ink3);margin-left:4px}
+.recap{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
+.recap div{background:var(--bg);border-radius:12px;padding:8px 10px}
+.recap span{display:block;font-size:11px;color:var(--ink3)}
+.recap b{font-weight:400;font-size:16px}
 .tuto p{margin:0 0 12px;font-size:15px;line-height:1.45}
 .tip.rappel{background:linear-gradient(150deg,#b91c1c,#f97316)!important;border:3px solid #fde047!important;animation:alerte 1.6s ease-in-out infinite}
 @keyframes alerte{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.75)}50%{box-shadow:0 0 0 12px rgba(249,115,22,0)}}
@@ -351,7 +355,7 @@ function renderHead() {
 }
 function itemTx(t) {
   const c = cat(t.cat);
-  return `<div class="it" data-tx="${t.id}"><div class="emo">${c.emo}</div><div class="t"><b>${esc(t.note || c.nom)}${t.fixe ? '<span class="tag">Fixe</span>' : ''}${t.aremb && !t.rembFini ? '<span class="tag remb">À rembourser</span>' : ''}</b><span>${esc(catLab(t.cat))} · ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}</span></div><span class="${t.type === 'dep' ? 'm-dep' : 'm-rev'}">${t.type === 'dep' ? '−' : '+'}${fE.format(t.montant)}</span></div>`;
+  return `<div class="it" data-tx="${t.id}"><div class="emo">${c.emo}</div><div class="t"><b>${esc(t.note || c.nom)}${t.fixe ? '<span class="tag">Fixe</span>' : ''}${enCoursRemb(t) ? '<span class="tag remb">À rembourser</span>' : t.type === 'dep' && t.aremb && recuDe(t.id) ? '<span class="tag remb">Remboursé ' + fE.format(recuDe(t.id)) + '</span>' : ''}${t.rembDe ? '<span class="tag remb">Remboursement</span>' : ''}</b><span>${esc(catLab(t.cat))} · ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}</span></div><span class="${t.type === 'dep' ? 'm-dep' : 'm-rev'}">${t.type === 'dep' ? '−' : '+'}${fE.format(t.montant)}</span></div>`;
 }
 function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
 function chart6() {
@@ -372,20 +376,26 @@ function chart6() {
   return s + '</svg>';
 }
 /* ---------- Remboursements ---------- */
-const resteRemb = (t) => Math.max(0, Math.round((t.montant - (t.rembRecu || 0)) * 100) / 100);
-const enAttente = () => DB.tx.filter((t) => t.type === 'dep' && t.aremb && !t.rembFini).map((t) => ({t, reste: resteRemb(t)}));
+const r2 = (x) => Math.round(x * 100) / 100;
+const recuDe = (id) => r2(DB.tx.filter((x) => x.type === 'rev' && x.rembDe === id).reduce((s, x) => s + x.montant, 0));
+const attendu = (t) => (t.rembAttendu > 0 ? t.rembAttendu : t.montant);
+const resteRemb = (t) => Math.max(0, r2(attendu(t) - recuDe(t.id)));
+const enCoursRemb = (t) => t.type === 'dep' && t.aremb && !t.rembFini && resteRemb(t) > 0.004;
+const enAttente = () => DB.tx.filter(enCoursRemb).map((t) => ({t, reste: resteRemb(t)}));
+const lienLab = (t) => `${cat(t.cat).emo} ${t.note || cat(t.cat).nom} · ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} · payé ${fE.format(t.montant)}`;
 function carteRemb() {
   const l = enAttente(); if (!l.length) return '';
   const T = l.reduce((s, x) => s + x.reste, 0);
   return `<div class="card"><div class="row"><h2 class="h2">🩺 Remboursements en attente</h2><b class="up">${fE0.format(T)}</b></div><p class="sub" style="margin:0 0 4px">Touche une ligne quand l'argent arrive.</p>
-    ${l.sort((a, b) => a.t.date.localeCompare(b.t.date)).map(({t, reste}) => `<div class="it" data-remb="${t.id}"><div class="emo">${cat(t.cat).emo}</div><div class="t"><b>${esc(t.note || cat(t.cat).nom)}</b><span>Payé le ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})}${t.rembRecu ? ' · déjà reçu ' + fE.format(t.rembRecu) : ''}</span></div><span class="m-rev">${fE.format(reste)}</span></div>`).join('')}</div>`;
+    ${l.sort((a, b) => a.t.date.localeCompare(b.t.date)).map(({t, reste}) => `<div class="it" data-remb="${t.id}"><div class="emo">${cat(t.cat).emo}</div><div class="t"><b>${esc(t.note || cat(t.cat).nom)}</b><span>Payé ${fE.format(t.montant)} le ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} · attendu ${fE.format(attendu(t))}${recuDe(t.id) ? ' · reçu ' + fE.format(recuDe(t.id)) : ''}</span></div><span class="m-rev">${fE.format(reste)}</span></div>`).join('')}</div>`;
 }
 function openRemb(id) {
   const t = DB.tx.find((x) => x.id === id); if (!t) return;
-  const reste = resteRemb(t);
+  const reste = resteRemb(t), dej = recuDe(t.id);
   sheet(`${head('Remboursement reçu')}
-    <p class="sub" style="margin:0 0 6px">${esc(t.note || cat(t.cat).nom)} · payé ${fE.format(t.montant)}${t.rembRecu ? ', déjà reçu ' + fE.format(t.rembRecu) : ''}</p>
-    <label class="l">Montant reçu</label><input class="f big" id="r-m" inputmode="decimal" value="${String(reste).replace('.', ',')}">
+    <div class="recap"><div><span>Payé</span><b>${fE.format(t.montant)}</b></div><div><span>Attendu</span><b>${fE.format(attendu(t))}</b></div><div><span>Déjà reçu</span><b>${fE.format(dej)}</b></div></div>
+    <p class="sub" style="margin:8px 0 0">${esc(t.note || cat(t.cat).nom)} · indique le montant réellement versé, même s'il est différent de ce qui était prévu.</p>
+    <label class="l">Montant reçu</label><input class="f big" id="r-m" inputmode="decimal" value="${reste.toFixed(2).replace('.', ',')}">
     <label class="l">Date</label><input class="f" id="r-d" type="date" value="${jourLocal(new Date())}">
     <label class="sw"><span>Il reste encore une part à recevoir (ex. mutuelle après la Sécu)</span><input type="checkbox" id="r-enc"></label>
     <button class="btn" data-rembok>Enregistrer le remboursement</button>
@@ -394,10 +404,9 @@ function openRemb(id) {
   box.querySelector('[data-rembok]').onclick = () => {
     const v = num($('r-m').value); if (!(v > 0)) { toast('Indique un montant'); return; }
     const rc = DB.cats.some((c) => c.id === 'rembours') ? 'rembours' : (mains('rev').slice(-1)[0] || {}).id;
-    DB.tx.push({id: uid(), type: 'rev', montant: Math.round(v * 100) / 100, cat: rc, date: $('r-d').value || jourLocal(new Date()), note: 'Remboursement : ' + (t.note || cat(t.cat).nom)});
-    t.rembRecu = Math.round(((t.rembRecu || 0) + v) * 100) / 100;
+    DB.tx.push({id: uid(), type: 'rev', montant: r2(v), cat: rc, date: $('r-d').value || jourLocal(new Date()), note: 'Remboursement : ' + (t.note || cat(t.cat).nom), rembDe: t.id});
     if (!$('r-enc').checked) t.rembFini = true;
-    save(); closeSheet(); renderAll(); toast('Remboursement ajouté aux revenus ✓');
+    save(); closeSheet(); renderAll(); toast('Reçu ✓ · reste à ta charge : ' + fE.format(r2(t.montant - recuDe(t.id))));
   };
   box.querySelector('[data-rembstop]').onclick = () => { t.rembFini = true; save(); closeSheet(); renderAll(); toast('Retiré des remboursements en attente'); };
 }
@@ -806,7 +815,8 @@ function openTx(id, preset) {
   const t = id ? Object.assign({}, DB.tx.find((x) => x.id === id)) : Object.assign({type: 'dep', montant: '', cat: mains('dep')[0] ? mains('dep')[0].id : 'courses', date: jourLocal(new Date()), note: ''}, preset || {});
   let type = t.type, sel = t.cat, rep = false;
   const subChips = () => { const l = subs(mainOf(sel)); return `<div class="chips">${l.length ? [cat(mainOf(sel))].concat(l).map((c, i) => `<button data-sc="${c.id}" class="${c.id === sel ? 'on' : ''}">${i ? esc(c.nom) : 'Sans sous-catégorie'}</button>`).join('') : ''}<button data-newsc class="add">+ Sous-catégorie</button></div>`; };
-  const keep = () => { t.montant = $('t-m').value; t.date = $('t-d').value; t.note = $('t-n').value; rep = !!($('t-rep') && $('t-rep').checked); if ($('t-remb')) t.aremb = $('t-remb').checked; };
+  const keep = () => { t.montant = $('t-m').value; t.date = $('t-d').value; t.note = $('t-n').value; rep = !!($('t-rep') && $('t-rep').checked); if ($('t-remb')) { t.aremb = $('t-remb').checked; t.rembAttendu = num($('t-ra').value) || 0; } if ($('t-lien')) t.rembDe = $('t-lien').value; };
+  const liens = () => DB.tx.filter((x) => enCoursRemb(x) || x.id === t.rembDe);
   const back = (nid) => { if (nid) sel = nid; renderAll(); draw(); };
   const draw = () => {
     sheet(`${head(id ? 'Modifier' : 'Ajouter')}
@@ -816,20 +826,26 @@ function openTx(id, preset) {
       <div id="t-subs">${subChips()}</div>
       <label class="l">Date</label><input class="f" id="t-d" type="date" value="${t.date}">
       <label class="l">Note (facultatif)</label><input class="f" id="t-n" value="${esc(t.note || '')}" placeholder="Ex. Carrefour, essence…">
-      ${type === 'dep' ? `<label class="sw"><span>🩺 À me faire rembourser (Sécu, mutuelle…)</span><input type="checkbox" id="t-remb" ${t.aremb ? 'checked' : ''}></label>` : ''}
+      ${type === 'dep' ? `<label class="sw"><span>🩺 À me faire rembourser (Sécu, mutuelle…)</span><input type="checkbox" id="t-remb" ${t.aremb ? 'checked' : ''}></label>
+        <div id="t-rembbox" class="${t.aremb ? '' : 'hide'}"><label class="l">Remboursement attendu au total (vide = 100 % du montant)</label><input class="f" id="t-ra" inputmode="decimal" placeholder="Ex. 42,00 €" value="${t.rembAttendu > 0 ? String(t.rembAttendu).replace('.', ',') : ''}">
+        ${id && recuDe(id) ? `<p class="sub" style="margin:8px 0 0">Déjà remboursé ${fE.format(recuDe(id))} · reste à ta charge ${fE.format(r2(num(t.montant) - recuDe(id)))}</p>` : ''}</div>` : ''}
+      ${type === 'rev' && liens().length ? `<label class="l">🩺 Ce revenu rembourse une dépense ? (facultatif)</label><select class="f" id="t-lien"><option value="">Non</option>${liens().map((x) => `<option value="${x.id}" ${x.id === t.rembDe ? 'selected' : ''}>${esc(lienLab(x))}${enCoursRemb(x) ? ' · reste ' + fE.format(resteRemb(x)) : ''}</option>`).join('')}</select><label class="sw"><span>C'est le dernier versement attendu pour cette dépense</span><input type="checkbox" id="t-lfin" checked></label>` : ''}
       ${id ? (t.fixe ? '<p style="font-size:13px;color:var(--ink3);margin:10px 0 0">Ligne créée par une dépense fixe : tu modifies seulement ce mois-ci.</p>' : '') : `<label class="sw"><span>Répéter chaque mois (fixe)</span><input type="checkbox" id="t-rep" ${rep ? 'checked' : ''}></label>`}
       <button class="btn" data-savetx>${id ? 'Enregistrer' : 'Ajouter'}</button>
       ${id ? '<button class="btn danger" data-deltx>Supprimer</button>' : ''}`);
     const box = $('sh');
     box.querySelector('[data-type]').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; keep(); type = b.dataset.v; sel = mains(type)[0].id; draw(); };
     box.querySelector('.cats').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; if (b.hasAttribute('data-newc')) { keep(); openCat(null, null, {type, done: back}); return; } sel = b.dataset.c; box.querySelectorAll('.cats button').forEach((x) => x.classList.toggle('on', x === b)); $('t-subs').innerHTML = subChips(); };
+    if ($('t-remb')) $('t-remb').onchange = () => $('t-rembbox').classList.toggle('hide', !$('t-remb').checked);
+    if ($('t-lien')) $('t-lien').onchange = () => { const d = DB.tx.find((x) => x.id === $('t-lien').value); if (d && !$('t-m').value) $('t-m').value = resteRemb(d).toFixed(2).replace('.', ','); if (d && !$('t-n').value) $('t-n').value = 'Remboursement : ' + (d.note || cat(d.cat).nom); if (d && DB.cats.some((c) => c.id === 'rembours') && mainOf(sel) !== 'rembours' && !cat(sel).nom.toLowerCase().includes('rembours')) { keep(); sel = 'rembours'; draw(); } };
     $('t-subs').onclick = (e) => { if (e.target.closest('[data-newsc]')) { keep(); openCat(null, mainOf(sel), {done: back}); return; } const b = e.target.closest('[data-sc]'); if (!b) return; sel = b.dataset.sc; $('t-subs').innerHTML = subChips(); };
     box.querySelector('[data-savetx]').onclick = () => {
       const m = num($('t-m').value);
       if (!(m > 0)) { toast('Indique un montant'); return; }
       const o = {id: id || uid(), type, montant: Math.round(m * 100) / 100, cat: sel, date: $('t-d').value || jourLocal(new Date()), note: $('t-n').value.trim()};
       if (t.fixe) o.fixe = t.fixe;
-      if (type === 'dep' && $('t-remb') && $('t-remb').checked) { o.aremb = true; if (t.rembRecu) o.rembRecu = t.rembRecu; if (t.rembFini) o.rembFini = t.rembFini; }
+      if (type === 'dep' && $('t-remb') && $('t-remb').checked) { o.aremb = true; const ra = num($('t-ra').value); if (ra > 0) o.rembAttendu = r2(ra); if (t.rembFini) o.rembFini = t.rembFini; }
+      if (type === 'rev' && $('t-lien') && $('t-lien').value) { o.rembDe = $('t-lien').value; const d = DB.tx.find((x) => x.id === o.rembDe); if (d) d.rembFini = $('t-lfin').checked ? true : undefined; }
       const r = $('t-rep');
       if (!id && r && r.checked) {
         const f = {id: uid(), type, montant: o.montant, cat: sel, jour: Number(o.date.slice(8, 10)), note: o.note, debut: ym(o.date), fin: '', actif: true};
