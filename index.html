@@ -81,6 +81,7 @@ main>section.hide{display:none!important}
 .dayh:first-child{border-top:0;padding-top:0}
 .tag{font-size:11px;font-weight:400;padding:1px 7px;border-radius:999px;border:.5px solid var(--line);color:var(--ink3);margin-left:6px;vertical-align:1px}
 .tag.remb{border-color:var(--acc);color:var(--acc)}
+.tag.late{border-color:var(--neg);color:var(--neg);font-weight:600}
 .subc{margin-left:28px;padding:5px 0 5px 10px;border-left:.5px solid var(--line);font-size:12.5px;color:var(--ink3);display:flex;justify-content:space-between}
 .empty{color:var(--ink3);font-size:13.5px;padding:6px 0}
 .hb{display:grid;grid-template-columns:110px 1fr auto;align-items:center;gap:10px;font-size:13px;margin-top:9px}
@@ -333,7 +334,7 @@ const _fE0 = new Intl.NumberFormat('fr-FR', {style: 'currency', currency: 'EUR',
 /* Montants entourés d'un <span class="amt"> pour pouvoir les flouter (réglage Confidentialité) */
 const fE = {format: (v) => '<span class="amt">' + (DB && DB.reglages && DB.reglages.centimes === false ? _fE0 : _fE).format(v) + '</span>'};
 const fE0 = {format: (v) => '<span class="amt">' + _fE0.format(v) + '</span>'};
-const CARTES = [['jour', 'Montant du jour'], ['alerte', 'Alertes de budget'], ['suggestion', 'Suggestion d\'épargne'], ['bilan', 'Bilan du mois'], ['recur', 'Dépenses qui reviennent'], ['rapide', 'Ajout rapide'], ['remb', 'Remboursements en attente'], ['avenir', 'D\'ici ta paie'], ['cats', 'Dépenses par catégorie'], ['fixvar', 'Fixes et variables'], ['budgets', 'Mes budgets du mois'], ['recents', 'Derniers mouvements']];
+const CARTES = [['jour', 'Montant du jour'], ['alerte', 'Alertes de budget'], ['relance', 'Remboursements en retard'], ['suggestion', 'Suggestion d\'épargne'], ['bilan', 'Bilan du mois'], ['recur', 'Dépenses qui reviennent'], ['rapide', 'Ajout rapide'], ['remb', 'Remboursements en attente'], ['avenir', 'D\'ici ta paie'], ['cats', 'Dépenses par catégorie'], ['fixvar', 'Fixes et variables'], ['budgets', 'Mes budgets du mois'], ['recents', 'Derniers mouvements']];
 /* ---------- Icônes fines (remplacent les emojis) ---------- */
 const IC = {
   cart: '<circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.6 12.4a1.5 1.5 0 0 0 1.5 1.1h8.4a1.5 1.5 0 0 0 1.5-1.2L21 8H6"/>',
@@ -572,12 +573,22 @@ const attendu = (t) => (t.rembAttendu > 0 ? t.rembAttendu : t.montant);
 const resteRemb = (t) => Math.max(0, r2(attendu(t) - recuDe(t.id)));
 const enCoursRemb = (t) => t.type === 'dep' && t.aremb && !t.rembFini && resteRemb(t) > 0.004;
 const enAttente = () => DB.tx.filter(enCoursRemb).map((t) => ({t, reste: resteRemb(t)}));
+const delaiRemb = () => (DB.reglages.rembJours == null ? 15 : Number(DB.reglages.rembJours) || 0);
+const joursDepuis = (d) => Math.max(0, Math.round((new Date(jourLocal(new Date()) + 'T12:00') - new Date(d + 'T12:00')) / 864e5));
+const enRetard = (t) => delaiRemb() > 0 && enCoursRemb(t) && joursDepuis(t.date) >= delaiRemb();
 const lienLab = (t) => `${t.note || cat(t.cat).nom} · ${jCourt(t.date)} · payé ${_fE.format(t.montant)}`;
 function carteRemb() {
   const l = enAttente(); if (!l.length) return '';
   const T = l.reduce((s, x) => s + x.reste, 0);
   return `<div class="card"><div class="row"><h2 class="h2">Remboursements en attente</h2><b class="up">${fE0.format(T)}</b></div><p class="sub" style="margin:0 0 4px">Touche une ligne quand l'argent arrive.</p>
-    ${l.sort((a, b) => a.t.date.localeCompare(b.t.date)).map(({t, reste}) => `<div class="it" data-remb="${t.id}"><div class="emo">${icOf(cat(t.cat))}</div><div class="t"><b>${esc(t.note || cat(t.cat).nom)}</b><span>Payé ${fE.format(t.montant)} le ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} · attendu ${fE.format(attendu(t))}${recuDe(t.id) ? ' · reçu ' + fE.format(recuDe(t.id)) : ''}</span></div><span class="m-rev">${fE.format(reste)}</span></div>`).join('')}</div>`;
+    ${l.sort((a, b) => a.t.date.localeCompare(b.t.date)).map(({t, reste}) => `<div class="it" data-remb="${t.id}"><div class="emo">${icOf(cat(t.cat))}</div><div class="t"><b>${esc(t.note || cat(t.cat).nom)}${enRetard(t) ? '<span class="tag late">En retard</span>' : ''}</b><span>Payé ${fE.format(t.montant)} le ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} · attendu ${fE.format(attendu(t))}${recuDe(t.id) ? ' · reçu ' + fE.format(recuDe(t.id)) : ''}</span></div><span class="m-rev">${fE.format(reste)}</span></div>`).join('')}</div>`;
+}
+function carteRelance() {
+  const l = enAttente().filter(({t}) => enRetard(t)); if (!l.length) return '';
+  const T = l.reduce((s, x) => s + x.reste, 0);
+  return `<div class="card tip warn"><div class="row"><h2 class="h2">${ludique() ? '⏰ ' : ico('alert')}${l.length > 1 ? l.length + ' remboursements en retard' : 'Remboursement en retard'}</h2><b>${fE0.format(T)}</b></div>
+    <p class="sub" style="margin:0 0 4px">Toujours rien reçu après ${delaiRemb()} jours. Vérifie sur Ameli ou ton espace mutuelle, puis touche la ligne si l'argent est arrivé.</p>
+    ${l.sort((a, b) => a.t.date.localeCompare(b.t.date)).map(({t, reste}) => `<div class="it" data-remb="${t.id}"><div class="emo">${icOf(cat(t.cat))}</div><div class="t"><b>${esc(t.note || cat(t.cat).nom)}</b><span>Payé le ${new Date(t.date).toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})} · il y a ${joursDepuis(t.date)} jours</span></div><span class="m-rev">${fE.format(reste)}</span></div>`).join('')}</div>`;
 }
 function openRemb(id) {
   const t = DB.tx.find((x) => x.id === id); if (!t) return;
@@ -637,8 +648,11 @@ function carteAVenir() {
     ${l.map(({f, date}) => `<div class="it" data-fixe="${f.id}"><div class="emo">${icOf(cat(f.cat))}</div><div class="t"><b>${esc(f.note || cat(f.cat).nom)}</b><span style="text-transform:capitalize">${jl(date)}</span></div><span class="${f.type === 'dep' ? 'm-dep' : 'm-rev'}">${f.type === 'dep' ? '−' : '+'}${fE.format(f.montant)}</span></div>`).join('')}</div>`;
 }
 /* ---------- Nouveautés : à chaque mise à jour, ajouter une entrée et augmenter VERSION ---------- */
-const VERSION = 4;
+const VERSION = 5;
 const NOUV = {
+  5: [
+    ['bell', 'Remboursements en retard', 'Si la Sécu ou ta mutuelle n\'a toujours rien versé après 15 jours, l\'appli te le rappelle sur l\'accueil. Le délai se règle dans Réglages.']
+  ],
   4: [
     ['sparkles', 'Nouveau look', 'Plus coloré et plus joyeux, avec tes emojis dans des pastilles. Tu peux revenir au vert nuit ou au thème clair dans Réglages.'],
     ['wallet', 'Ce que tu peux dépenser aujourd\'hui', 'En haut de l\'accueil. Touche le petit « ? » pour voir le calcul, comme sur les autres chiffres calculés.'],
@@ -784,6 +798,7 @@ function renderAccueil() {
   $('p-accueil').innerHTML = `
     ${on('jour') ? carteJour() : ''}
     ${on('alerte') ? carteAlerteBud() : ''}
+    ${on('relance') ? carteRelance() : ''}
     ${on('suggestion') ? suggestion() : ''}
     ${on('bilan') ? carteBilanAccueil() : ''}
     ${on('recur') ? carteRecur(1) : ''}
@@ -1421,6 +1436,8 @@ function openReglages() {
     <p class="rg-sec">Automatismes</p>
     <div class="acc" data-regles><div class="emo">${ico('wand')}</div><div class="t"><b>Règles automatiques</b><span>${DB.regles.length ? DB.regles.length + ' règle' + (DB.regles.length > 1 ? 's' : '') : 'Libellé → catégorie'}</span></div>${ico('right')}</div>
     <div class="acc" data-pointer><div class="emo">${ico('scale')}</div><div class="t"><b>Pointage avec ma banque</b><span>${DB.banque ? 'Compte estimé ' + _fE.format(soldeCalc()) : 'Pas encore commencé'}</span></div>${ico('right')}</div>
+    <label class="l">Me relancer si un remboursement santé n'est pas arrivé après</label>
+    <select class="f" id="r-rembj">${[[7, '7 jours'], [15, '15 jours'], [30, '30 jours'], [45, '45 jours'], [0, 'Jamais']].map(([v, t]) => `<option value="${v}" ${v === delaiRemb() ? 'selected' : ''}>${t}</option>`).join('')}</select>
     ${(g.recIgn || []).length ? `<button class="lnk" data-recreset>Réafficher les dépenses récurrentes ignorées (${g.recIgn.length})</button>` : ''}
 
     <p class="rg-sec">Confidentialité</p>
@@ -1475,6 +1492,7 @@ function openReglages() {
   seg('r-mode', (v) => { g.mode = v; applyTheme(); renderAll(); });
   seg('r-taille', (v) => { g.taille = v; applyTheme(); });
   $('r-acc').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; g.acc = b.dataset.v; save(); applyTheme(); $('r-acc').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+  $('r-rembj').onchange = () => { g.rembJours = Number($('r-rembj').value); save(); renderAccueil(); ok(g.rembJours ? 'Relance après ' + g.rembJours + ' jours ✓' : 'Relance désactivée'); };
   $('r-delai').onchange = () => { g.delai = Number($('r-delai').value); save(); ok(); };
   $('r-onglet').onchange = () => { g.onglet = $('r-onglet').value; save(); ok('Onglet d\'ouverture : ' + ONGLETS.find(([v]) => v === g.onglet)[1]); };
   $('r-sjour').onchange = () => { g.sauvJour = Number($('r-sjour').value); save(); renderRappel(); ok(g.sauvJour < 0 ? 'Rappel de sauvegarde désactivé' : 'Rappel chaque ' + nomJourSauv() + ' ✓'); };
